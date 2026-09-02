@@ -155,7 +155,7 @@ def test_emphasized_direct_label_adds_caps_tracking_and_italics():
 
 
 def test_band_uses_active_accent_and_hatch():
-    lab74.use("marlin")
+    lab74.use("telemetry")
     _, ax = plt.subplots()
     x = np.linspace(0, 1, 12)
     band = lab74.band(ax, x, x - 0.1, x + 0.1, hatch="//")
@@ -270,7 +270,7 @@ def test_separated_bar_supports_accented_horizontal_bars():
 
 
 def test_stairs_uses_active_accent_and_one_stroke_width():
-    lab74.use("fermilab")
+    lab74.use("laboratory")
     original_hatch_width = plt.rcParams["hatch.linewidth"]
     _, ax = plt.subplots()
 
@@ -361,7 +361,7 @@ def test_technical_contour_line_and_filled_modes():
     y = np.linspace(-2, 2, 31)
     xx, yy = np.meshgrid(x, y)
     z = xx**2 - yy**2
-    lab74.use("fermilab")
+    lab74.use("laboratory")
     _, (ax1, ax2) = plt.subplots(1, 2)
     lines, regions = lab74.technical_contour(
         ax1, x, y, z, levels=[-2, -1, 0, 1, 2], accent_levels=[0]
@@ -372,7 +372,7 @@ def test_technical_contour_line_and_filled_modes():
         int(lab74.INK[index : index + 2], 16) / 255 for index in (1, 3, 5)
     )
     expected_accent = tuple(
-        int(lab74.ACCENTS["fermilab"][index : index + 2], 16) / 255
+        int(lab74.ACCENTS["laboratory"][index : index + 2], 16) / 255
         for index in (1, 3, 5)
     )
     np.testing.assert_allclose(
@@ -450,7 +450,7 @@ def test_technical_contour_supports_custom_label_formatting():
 
 
 def test_map_linework_suppresses_series_markers_and_linestyles():
-    lab74.use("fermilab")
+    lab74.use("laboratory")
     _, ax = plt.subplots()
 
     lines = lab74.map_linework(

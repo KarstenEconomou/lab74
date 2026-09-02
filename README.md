@@ -24,6 +24,8 @@ Requirements:
 
 ## Basic use
 
+[![lab74 colour reproduction standard](examples/output/06_palette.png)](examples/06_palette.ipynb)
+
 ```python
 import matplotlib.pyplot as plt
 import lab74
@@ -57,18 +59,9 @@ This method uses the default `instrument` accent.
 ## Plot tools
 
 `lab74` includes small tools for annotations, error bars, grouped bars, hatched
-regions, contours, maps, ticks, frames, and multipanel layouts. These tools
-return normal Matplotlib artists. Thus, you can change the result with the
-Matplotlib API.
-
-`grouped_bar` applies the bar sequence across series, while `separated_bar`
-applies it across individual bars. Both suppress tick marks, but not labels, on
-the categorical axis.
-The accented and monochrome sequences for each plot type are defined together
-in [`src/lab74/sequences.py`](src/lab74/sequences.py).
-
-Use ink and a maximum of one accent color in each figure. Set the final axis
-limits before you add stipple. This makes the stipple density correct.
+regions, contours, maps, tables, ticks, frames, and multipanel layouts. These
+tools return normal Matplotlib artists. Thus, you can change the result with
+the Matplotlib API.
 
 See [src/lab74/](src/lab74/) for all available tools and their
 docstrings.

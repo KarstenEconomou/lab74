@@ -51,6 +51,7 @@ from .primitives import (
     technical_contour,
 )
 from .sequences import line_cycle
+from .tables import TableSwatch, header, table
 
 STYLE_PATH: Final = Path(__file__).with_name("lab74.mplstyle")
 type FontFace = Literal["mono", "gothic"]
@@ -61,11 +62,11 @@ def use(
         "instrument",
         "aerospace",
         "oxide",
+        "research",
+        "survey",
+        "telemetry",
+        "technology",
         "laboratory",
-        "prairie",
-        "marlin",
-        "technical",
-        "fermilab",
     ]
     | None = "instrument",
     *,
@@ -103,6 +104,7 @@ __all__ = [
     "MultipanelMode",
     "TickAxis",
     "TickStyle",
+    "TableSwatch",
     "band",
     "direct_label",
     "errorbar",
@@ -112,12 +114,14 @@ __all__ = [
     "format_ticks",
     "get_accent",
     "grouped_bar",
+    "header",
     "map_linework",
     "leader",
     "legend",
     "overflow_label",
     "plate_label",
     "stipple",
+    "table",
     "source_note",
     "sequences",
     "separated_bar",
