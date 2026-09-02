@@ -54,19 +54,15 @@ def test_format_ticks_supports_axis_specific_size_override():
     assert ax.yaxis.majorTicks[0].get_tickdir() == "inout"
     assert ax.yaxis.majorTicks[0].tick1line.get_markersize() == pytest.approx(4.0)
     assert ax.yaxis.minorTicks[0].tick1line.get_markersize() == pytest.approx(2.5)
-    assert ax.yaxis.majorTicks[0].tick1line.get_markeredgewidth() == pytest.approx(
-        0.45
-    )
-    assert ax.yaxis.minorTicks[0].tick1line.get_markeredgewidth() == pytest.approx(
-        0.35
-    )
+    assert ax.yaxis.majorTicks[0].tick1line.get_markeredgewidth() == pytest.approx(0.45)
+    assert ax.yaxis.minorTicks[0].tick1line.get_markeredgewidth() == pytest.approx(0.35)
 
 
-def test_format_frame_hides_spines_and_major_and_minor_ticks():
+def test_format_frame_open_style_hides_spines_and_major_and_minor_ticks():
     fig, ax = plt.subplots()
     ax.minorticks_on()
 
-    panels = lab74.format_frame(ax, top=False, right=False)
+    panels = lab74.format_frame(ax, style="open")
     fig.canvas.draw()
 
     assert panels == (ax,)
@@ -76,6 +72,17 @@ def test_format_frame_hides_spines_and_major_and_minor_ticks():
     assert not any(tick.tick2line.get_visible() for tick in ax.yaxis.majorTicks)
     assert not any(tick.tick2line.get_visible() for tick in ax.xaxis.minorTicks)
     assert not any(tick.tick2line.get_visible() for tick in ax.yaxis.minorTicks)
+
+
+def test_format_frame_defaults_to_closed_and_rejects_unknown_style():
+    _, ax = plt.subplots()
+
+    lab74.format_frame(ax)
+
+    assert ax.spines["top"].get_visible()
+    assert ax.spines["right"].get_visible()
+    with pytest.raises(ValueError, match="frame style"):
+        lab74.format_frame(ax, style="half-open")
 
 
 def test_format_graticule_draws_degree_labels_without_cartesian_axes():
@@ -165,18 +172,16 @@ def test_format_multipanel_accepts_cross_tick_style():
         assert ax.xaxis.minorTicks[0].tick1line.get_markersize() == pytest.approx(1.8)
 
 
-def test_format_multipanel_mode_can_be_overridden():
+def test_format_multipanel_spacing_can_be_overridden():
     fig, ax = plt.subplots()
 
-    panels = lab74.format_multipanel(
-        ax, mode="open", hspace=0.08, wspace=0.12, top=True, right=True
-    )
+    panels = lab74.format_multipanel(ax, mode="open", hspace=0.08, wspace=0.12)
 
     assert panels == (ax,)
     assert fig.subplotpars.hspace == pytest.approx(0.08)
     assert fig.subplotpars.wspace == pytest.approx(0.12)
-    assert ax.spines["top"].get_visible()
-    assert ax.spines["right"].get_visible()
+    assert not ax.spines["top"].get_visible()
+    assert not ax.spines["right"].get_visible()
 
 
 def test_format_multipanel_rejects_axes_from_different_figures():

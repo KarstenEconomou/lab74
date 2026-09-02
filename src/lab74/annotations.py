@@ -6,9 +6,10 @@ from typing import Any, Literal
 
 import matplotlib as mpl
 from matplotlib.axes import Axes
+from matplotlib.legend import Legend
 from matplotlib.lines import Line2D
 from matplotlib.text import Annotation, Text
-from matplotlib.transforms import blended_transform_factory
+from matplotlib.transforms import blended_transform_factory, offset_copy
 from matplotlib.typing import ColorType
 
 from ._fonts import TECHNICAL_FONT
@@ -22,6 +23,19 @@ _LOCATIONS: dict[LabelLocation, tuple[tuple[float, float], str, str]] = {
     "upper right": ((0.96, 0.96), "right", "top"),
     "lower left": ((0.04, 0.04), "left", "bottom"),
     "lower right": ((0.96, 0.04), "right", "bottom"),
+}
+
+_LEGEND_LOCATIONS: dict[str, tuple[tuple[float, float], str, str]] = {
+    "upper left": ((0, 1), "left", "top"),
+    "upper center": ((0.5, 1), "center", "top"),
+    "upper right": ((1, 1), "right", "top"),
+    "center left": ((0, 0.5), "left", "center"),
+    "center": ((0.5, 0.5), "center", "center"),
+    "center right": ((1, 0.5), "right", "center"),
+    "right": ((1, 0.5), "right", "center"),
+    "lower left": ((0, 0), "left", "bottom"),
+    "lower center": ((0.5, 0), "center", "bottom"),
+    "lower right": ((1, 0), "right", "bottom"),
 }
 
 
@@ -38,26 +52,78 @@ def plate_label(
     ax: Axes,
     text: str,
     *,
-    loc: LabelLocation = "upper left",
+    loc: Literal["upper left", "upper right", "lower left", "lower right"] = (
+        "upper left"
+    ),
+    style: Literal["emphasized"] | None = None,
     color: ColorType = INK,
     **kwargs: Any,
 ) -> Text:
-    """Add a technical label at a fixed position in the axes."""
+    """Add a technical label with an optional ``emphasized`` style."""
     if loc not in _LOCATIONS:
         choices = ", ".join(_LOCATIONS)
         raise ValueError(
             f"The value is an unknown plate-label location: {loc!r}. "
             f"Use one of these locations: {choices}."
         )
+    if style not in (None, "emphasized"):
+        raise ValueError("The plate-label style must be 'emphasized' or None.")
+    if style == "emphasized":
+        text = "   ".join(" ".join(word) for word in text.upper().split())
     xy, ha, va = _LOCATIONS[loc]
+    inset_transform = offset_copy(
+        ax.transAxes,
+        fig=ax.figure,
+        x=4 if ha == "left" else -4,
+        y=4 if va == "bottom" else -4,
+        units="points",
+    )
     defaults: dict[str, Any] = _technical_text(color) | {
-        "transform": ax.transAxes,
+        "transform": inset_transform,
         "ha": ha,
         "va": va,
         "clip_on": False,
     }
+    if style == "emphasized":
+        defaults["fontstyle"] = "italic"
     defaults.update(kwargs)
     return ax.text(*xy, text, **defaults)
+
+
+def legend(ax: Axes, *args: Any, **kwargs: Any) -> Legend:
+    """Add a left-aligned legend with frame-aware edge offsets."""
+    defaults: dict[str, Any] = {"alignment": "left"}
+    loc = kwargs.get("loc")
+    has_explicit_anchor = "bbox_to_anchor" in kwargs or "bbox_transform" in kwargs
+    if isinstance(loc, str) and loc in _LEGEND_LOCATIONS and not has_explicit_anchor:
+        anchor, horizontal, vertical = _LEGEND_LOCATIONS[loc]
+        right_open = not ax.spines["right"].get_visible()
+        top_open = not ax.spines["top"].get_visible()
+        x_offset = 0
+        y_offset = 0
+        if horizontal == "left":
+            x_offset = 6
+        elif horizontal == "right":
+            x_offset = 4 if right_open else -6
+        if vertical == "bottom":
+            y_offset = 4
+        elif vertical == "top":
+            y_offset = 2 if top_open else -4
+        defaults.update(
+            {
+                "bbox_to_anchor": anchor,
+                "bbox_transform": offset_copy(
+                    ax.transAxes,
+                    fig=ax.figure,
+                    x=x_offset,
+                    y=y_offset,
+                    units="points",
+                ),
+                "borderaxespad": 0,
+            }
+        )
+    defaults.update(kwargs)
+    return ax.legend(*args, **defaults)
 
 
 def source_note(
@@ -122,15 +188,15 @@ def direct_label(
     text: str,
     *,
     offset: tuple[float, float] = (4, 0),
-    style: DirectLabelStyle | None = None,
+    style: Literal["emphasized"] | None = None,
     color: ColorType = INK,
     **kwargs: Any,
 ) -> Annotation:
-    """Add a technical label at a point, with an optional point offset."""
+    """Add a technical label with an optional ``emphasized`` style."""
     if style not in (None, "emphasized"):
         raise ValueError("The direct-label style must be 'emphasized' or None.")
     if style == "emphasized":
-        text = "   ".join(" ".join(word) for word in text.split())
+        text = "   ".join(" ".join(word) for word in text.upper().split())
 
     defaults: dict[str, Any] = _technical_text(color) | {
         "xytext": offset,
@@ -225,6 +291,7 @@ __all__ = [
     "LabelLocation",
     "direct_label",
     "leader",
+    "legend",
     "overflow_label",
     "plate_label",
     "source_note",

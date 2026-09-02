@@ -38,7 +38,7 @@ def test_use_applies_required_rcparams():
         assert mpl.rcParams["axes.edgecolor"] == lab74.INK
         assert mpl.rcParams["axes.linewidth"] == pytest.approx(0.6)
         assert mpl.rcParams["axes.labelsize"] == pytest.approx(8.5)
-        assert mpl.rcParams["axes.labelpad"] == pytest.approx(6)
+        assert mpl.rcParams["axes.labelpad"] == pytest.approx(5)
         assert mpl.rcParams["lines.linewidth"] == pytest.approx(0.55)
         assert mpl.rcParams["lines.markersize"] == pytest.approx(3)
         assert mpl.rcParams["lines.markeredgewidth"] == pytest.approx(0.55)
@@ -62,11 +62,14 @@ def test_use_applies_required_rcparams():
         assert mpl.rcParams["legend.handlelength"] == pytest.approx(1)
         assert mpl.rcParams["legend.handleheight"] == pytest.approx(1)
         assert mpl.rcParams["legend.handletextpad"] == pytest.approx(0.3)
+        assert mpl.rcParams["legend.borderaxespad"] == pytest.approx(1.0)
         assert mpl.rcParams["savefig.pad_inches"] == pytest.approx(0.015)
         cycle = mpl.rcParams["axes.prop_cycle"].by_key()
         assert cycle["color"][0] == lab74.ACCENTS["oxide"]
         assert cycle["color"][1:] == [lab74.INK] * 5
-        assert cycle["marker"] == ["o", "s", "^", "D", "x", "+"]
+        assert cycle["marker"] == [
+            marker for _, _, marker in lab74.sequences.LINE_WITH_ACCENT
+        ]
 
 
 def test_use_rejects_unknown_accent_without_applying_style():
@@ -81,7 +84,10 @@ def test_use_without_accent_produces_monochrome_cycle():
     with mpl.rc_context():
         lab74.use(accent=None)
         cycle = mpl.rcParams["axes.prop_cycle"].by_key()
-        assert cycle["color"] == [lab74.INK] * 6
+        assert cycle["color"] == [
+            *lab74.MONOCHROME_LINE_COLORS,
+            *lab74.MONOCHROME_LINE_COLORS[:2],
+        ]
 
 
 @pytest.mark.parametrize(

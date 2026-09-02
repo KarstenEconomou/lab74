@@ -1,12 +1,14 @@
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 from matplotlib.collections import PathCollection, PolyCollection
 from matplotlib.contour import QuadContourSet
-from matplotlib.container import ErrorbarContainer
+from matplotlib.container import BarContainer, ErrorbarContainer
 from matplotlib.legend import Legend
 from matplotlib.path import Path
 from matplotlib.patches import StepPatch
+from matplotlib.ticker import NullLocator
 from matplotlib.text import Annotation, Text
 
 import lab74
@@ -43,6 +45,70 @@ def test_annotations_inherit_tick_label_size():
         )
 
 
+@pytest.mark.parametrize(
+    ("loc", "position", "offset"),
+    [
+        ("upper left", (0.04, 0.96), (4, -4)),
+        ("upper right", (0.96, 0.96), (-4, -4)),
+        ("lower left", (0.04, 0.04), (4, 4)),
+        ("lower right", (0.96, 0.04), (-4, 4)),
+    ],
+)
+def test_plate_labels_are_inset_four_points_from_named_corner(loc, position, offset):
+    fig, ax = plt.subplots()
+    label = lab74.plate_label(ax, "FIG. 05", loc=loc)
+    fig.canvas.draw()
+
+    actual = label.get_transform().transform(label.get_position())
+    expected = ax.transAxes.transform(position) + np.array(offset) * fig.dpi / 72
+    np.testing.assert_allclose(actual, expected)
+
+
+def test_emphasized_plate_label_adds_caps_tracking_and_italics():
+    _, ax = plt.subplots()
+
+    label = lab74.plate_label(ax, "Apollo 17 Probe 1", style="emphasized")
+
+    assert label.get_text() == "A P O L L O   1 7   P R O B E   1"
+    assert label.get_fontstyle() == "italic"
+    with pytest.raises(ValueError, match="plate-label style"):
+        lab74.plate_label(ax, "INVALID", style="display")
+
+
+def test_legend_title_and_entries_are_left_aligned():
+    _, ax = plt.subplots()
+    ax.plot([0, 1], [0, 1], label="SERIES")
+
+    legend = lab74.legend(ax, title="MEASUREMENT")
+
+    assert legend.get_alignment() == "left"
+
+
+@pytest.mark.parametrize(
+    ("frame_style", "loc", "axes_anchor", "legend_corner", "offset"),
+    [
+        ("closed", "upper right", (1, 1), ("x1", "y1"), (-6, -4)),
+        ("open", "upper right", (1, 1), ("x1", "y1"), (4, 2)),
+        ("open", "upper left", (0, 1), ("x0", "y1"), (6, 2)),
+        ("open", "lower right", (1, 0), ("x1", "y0"), (4, 4)),
+    ],
+)
+def test_legend_offsets_follow_visible_frame_edges(
+    frame_style, loc, axes_anchor, legend_corner, offset
+):
+    fig, ax = plt.subplots()
+    ax.plot([0, 1], [0, 1], label="SERIES")
+    lab74.format_frame(ax, style=frame_style)
+
+    legend = lab74.legend(ax, loc=loc)
+    fig.canvas.draw()
+
+    bounds = legend.get_window_extent(fig.canvas.get_renderer())
+    actual = np.array([getattr(bounds, coordinate) for coordinate in legend_corner])
+    expected = ax.transAxes.transform(axes_anchor) + np.array(offset) * fig.dpi / 72
+    np.testing.assert_allclose(actual, expected)
+
+
 def test_source_note_uses_a_fixed_point_offset_and_prefix():
     _, (ax, other) = plt.subplots(1, 2)
 
@@ -77,10 +143,10 @@ def test_overflow_label_marks_region_edges_and_uses_mixed_coordinates():
         lab74.overflow_label(ax, "invalid", (3.1, 3.0))
 
 
-def test_emphasized_direct_label_adds_tracking_and_italics():
+def test_emphasized_direct_label_adds_caps_tracking_and_italics():
     _, ax = plt.subplots()
 
-    label = lab74.direct_label(ax, 1, 2, "APOLLO 15 PROBE 1", style="emphasized")
+    label = lab74.direct_label(ax, 1, 2, "Apollo 15 Probe 1", style="emphasized")
 
     assert label.get_text() == "A P O L L O   1 5   P R O B E   1"
     assert label.get_fontstyle() == "italic"
@@ -100,14 +166,115 @@ def test_band_uses_active_accent_and_hatch():
     np.testing.assert_allclose(band.get_hatchcolor(), band.get_edgecolor())
 
 
+def test_grouped_bar_uses_graduated_defaults_and_unticked_category_axis():
+    lab74.use("aerospace")
+    fig, ax = plt.subplots()
+
+    bars = lab74.grouped_bar(
+        ax,
+        [[1, 2], [3, 4], [5, 6]],
+        labels=["EMPTY", "HATCHED", "FILLED"],
+        categories=["A", "B"],
+    )
+    fig.canvas.draw()
+
+    assert all(isinstance(container, BarContainer) for container in bars)
+    assert [container.get_label() for container in bars] == [
+        "EMPTY",
+        "HATCHED",
+        "FILLED",
+    ]
+    assert [container[0].get_hatch() for container in bars] == ["", "", "///"]
+    expected_paper = mpl.colors.to_rgba(lab74.PAPER)
+    expected_accent = mpl.colors.to_rgba(lab74.ACCENTS["aerospace"])
+    assert bars[0][0].get_facecolor() == pytest.approx(expected_accent)
+    assert bars[1][0].get_facecolor() == pytest.approx(expected_paper)
+    assert bars[2][0].get_facecolor() == pytest.approx(expected_paper)
+    centers = [
+        bar.get_x() + bar.get_width() / 2
+        for bar in (bars[0][0], bars[1][0], bars[2][0])
+    ]
+    assert centers == pytest.approx([-0.8 / 3, 0, 0.8 / 3])
+    assert all(bar.get_width() == pytest.approx(0.8 / 3) for bar in bars[0])
+    assert [tick.get_text() for tick in ax.get_xticklabels()] == ["A", "B"]
+    assert all(tick.tick1line.get_markersize() == 0 for tick in ax.xaxis.majorTicks)
+    assert isinstance(ax.xaxis.get_minor_locator(), NullLocator)
+
+
+def test_grouped_bar_supports_a_horizontal_category_axis():
+    fig, ax = plt.subplots()
+
+    lab74.grouped_bar(
+        ax,
+        [[1, 2], [3, 4]],
+        categories=["A", "B"],
+        orientation="horizontal",
+    )
+    fig.canvas.draw()
+
+    assert [tick.get_text() for tick in ax.get_yticklabels()] == ["A", "B"]
+    assert all(tick.tick1line.get_markersize() == 0 for tick in ax.yaxis.majorTicks)
+    assert isinstance(ax.yaxis.get_minor_locator(), NullLocator)
+
+
+def test_separated_bar_advances_the_bar_sequence_for_each_bar():
+    lab74.use(accent=None)
+    fig, ax = plt.subplots()
+
+    bars = lab74.separated_bar(
+        ax,
+        [6, 4, 8, 5, 7, 3, 9],
+        categories=list("ABCDEFG"),
+    )
+    fig.canvas.draw()
+
+    assert isinstance(bars, BarContainer)
+    assert [bar.get_hatch() for bar in bars] == [
+        "",
+        "///",
+        "",
+        "\\\\\\",
+        "xxx",
+        "...",
+        "",
+    ]
+    expected_paper = mpl.colors.to_rgba(lab74.PAPER)
+    expected_ink = mpl.colors.to_rgba(lab74.INK)
+    assert bars[0].get_facecolor() == pytest.approx(expected_paper)
+    assert bars[2].get_facecolor() == pytest.approx(expected_ink)
+    assert bars[6].get_facecolor() == pytest.approx(expected_paper)
+    assert all(bar.get_width() == pytest.approx(0.8) for bar in bars)
+    assert [tick.get_text() for tick in ax.get_xticklabels()] == list("ABCDEFG")
+    assert all(tick.tick1line.get_markersize() == 0 for tick in ax.xaxis.majorTicks)
+    assert isinstance(ax.xaxis.get_minor_locator(), NullLocator)
+
+
+def test_separated_bar_supports_accented_horizontal_bars():
+    lab74.use("oxide")
+    fig, ax = plt.subplots()
+
+    bars = lab74.separated_bar(
+        ax,
+        [1, 2, 3, 4],
+        categories=["A", "B", "C", "D"],
+        orientation="horizontal",
+    )
+    fig.canvas.draw()
+
+    assert bars[0].get_facecolor() == pytest.approx(
+        mpl.colors.to_rgba(lab74.ACCENTS["oxide"])
+    )
+    assert bars[3].get_facecolor() == pytest.approx(mpl.colors.to_rgba(lab74.INK))
+    assert all(tick.tick1line.get_markersize() == 0 for tick in ax.yaxis.majorTicks)
+    assert isinstance(ax.yaxis.get_minor_locator(), NullLocator)
+
+
 def test_stairs_uses_active_accent_and_one_stroke_width():
     lab74.use("fermilab")
     original_hatch_width = plt.rcParams["hatch.linewidth"]
     _, ax = plt.subplots()
 
-    stairs = lab74.stairs(
-        ax, [2, 4, 3], [0, 1, 2, 3], hatch="///", linewidth=0.8
-    )
+    stairs = lab74.stairs(ax, [2, 4, 3], [0, 1, 2, 3], hatch="///", linewidth=0.8)
 
     assert isinstance(stairs, StepPatch)
     assert stairs in ax.patches
@@ -143,9 +310,7 @@ def test_stairs_uses_matplotlib_legend_handler_without_global_mutation():
     original_handler = Legend.get_default_handler_map()[StepPatch]
     lab74.use()
     _, ax = plt.subplots()
-    stairs = lab74.stairs(
-        ax, [2, 4, 3], [0, 1, 2, 3], label="distribution"
-    )
+    stairs = lab74.stairs(ax, [2, 4, 3], [0, 1, 2, 3], label="distribution")
 
     legend = ax.legend()
 
@@ -255,14 +420,10 @@ def test_technical_contour_labels_inherit_tick_label_size():
     z = xx**2 + yy**2
     with plt.rc_context({"xtick.labelsize": 6.25}):
         _, ax = plt.subplots()
-        lab74.technical_contour(
-            ax, x, y, z, levels=[1, 2, 3], labels=True
-        )
+        lab74.technical_contour(ax, x, y, z, levels=[1, 2, 3], labels=True)
 
         assert ax.texts
-        assert all(
-            text.get_fontsize() == pytest.approx(6.25) for text in ax.texts
-        )
+        assert all(text.get_fontsize() == pytest.approx(6.25) for text in ax.texts)
 
 
 def test_technical_contour_supports_custom_label_formatting():

@@ -15,7 +15,7 @@ axes.edgecolor: "#101112"
 axes.linewidth: 0.6
 axes.labelcolor: "#101112"
 axes.labelsize: 8.5
-axes.labelpad: 6
+axes.labelpad: 5
 axes.titlesize: 10
 axes.titleweight: normal
 axes.titlepad: 6
@@ -81,6 +81,7 @@ legend.fancybox: False
 legend.shadow: False
 legend.framealpha: 1.0
 legend.borderpad: 0.25
+legend.borderaxespad: 1.0
 legend.labelspacing: 0.25
 legend.handlelength: 1.0
 legend.handleheight: 1.0

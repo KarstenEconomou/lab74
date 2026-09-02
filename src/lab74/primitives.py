@@ -5,31 +5,183 @@ from __future__ import annotations
 from collections.abc import Callable, Iterable, Mapping, Sequence
 from itertools import pairwise
 from math import isfinite
-from typing import Any
+from typing import Any, Literal
 
 import matplotlib as mpl
 import numpy as np
 from matplotlib.axes import Axes
 from matplotlib.collections import PathCollection, PolyCollection
 from matplotlib.contour import QuadContourSet
-from matplotlib.container import ErrorbarContainer
+from matplotlib.container import BarContainer, ErrorbarContainer
 from matplotlib.lines import Line2D
 from matplotlib.path import Path
 from matplotlib.patches import StepPatch
+from matplotlib.ticker import NullLocator
 from matplotlib.typing import ColorType
 from numpy.typing import ArrayLike
 
-from .palette import ACCENTS, INK, PAPER
-
-_HATCHES = ("", "/", "\\", "x", ".", "..")
+from .palette import ACCENTS, INK, MONOCHROME_LINE_COLORS, PAPER
+from .sequences import CONTOUR_HATCHES, bar_styles
 
 type ContourLabelFormat = str | Mapping[float, str] | Callable[[float], str]
+type BarOrientation = Literal["vertical", "horizontal"]
 
 
-def _active_accent() -> ColorType:
-    """Return the first active color or the default accent."""
+def _active_accent() -> ColorType | None:
+    """Return the active accent, or none for a monochrome cycle."""
     colors = mpl.rcParams["axes.prop_cycle"].by_key().get("color", [])
-    return colors[0] if colors else ACCENTS["instrument"]
+    if not colors:
+        return ACCENTS["instrument"]
+    is_monochrome = any(
+        mpl.colors.same_color(colors[0], color)
+        for color in (INK, MONOCHROME_LINE_COLORS[0])
+    )
+    return None if is_monochrome else colors[0]
+
+
+def _active_color() -> ColorType:
+    """Return the active accent or ink for a monochrome cycle."""
+    return _active_accent() or INK
+
+
+def _bar_positions(
+    count: int,
+    positions: ArrayLike | None,
+    *,
+    kind: str,
+) -> np.ndarray:
+    """Return validated category positions for a bar plot."""
+    resolved = (
+        np.arange(count, dtype=float)
+        if positions is None
+        else np.asarray(positions, dtype=float)
+    )
+    if resolved.ndim != 1 or len(resolved) != count:
+        raise ValueError(f"{kind} positions must match the number of bars or groups.")
+    return resolved
+
+
+def _validate_bar_options(
+    width: float,
+    orientation: BarOrientation,
+    *,
+    kind: str,
+) -> None:
+    """Validate options shared by the two bar helpers."""
+    if not isfinite(width) or width <= 0:
+        raise ValueError(f"The {kind.lower()} width must be positive and finite.")
+    if orientation not in ("vertical", "horizontal"):
+        raise ValueError("The bar orientation must be 'vertical' or 'horizontal'.")
+
+
+def _format_bar_categories(
+    ax: Axes,
+    positions: np.ndarray,
+    categories: Sequence[str] | None,
+    orientation: BarOrientation,
+) -> None:
+    """Label the category axis and suppress its tick marks."""
+    category_axis = ax.xaxis if orientation == "vertical" else ax.yaxis
+    if orientation == "vertical":
+        ax.set_xticks(positions, categories)
+        ax.tick_params(axis="x", which="both", length=0)
+    else:
+        ax.set_yticks(positions, categories)
+        ax.tick_params(axis="y", which="both", length=0)
+    category_axis.set_minor_locator(NullLocator())
+
+
+def _bar_defaults(
+    style: Mapping[str, Any], kwargs: Mapping[str, Any]
+) -> dict[str, Any]:
+    """Combine library bar properties with explicit Matplotlib overrides."""
+    defaults: dict[str, Any] = {
+        "edgecolor": INK,
+        "linewidth": mpl.rcParams["patch.linewidth"],
+        **style,
+    }
+    defaults.update(kwargs)
+    return defaults
+
+
+def grouped_bar(
+    ax: Axes,
+    values: ArrayLike,
+    *,
+    labels: Sequence[str] | None = None,
+    categories: Sequence[str] | None = None,
+    positions: ArrayLike | None = None,
+    width: float = 0.8,
+    orientation: Literal["vertical", "horizontal"] = "vertical",
+    **kwargs: Any,
+) -> tuple[BarContainer, ...]:
+    """Draw grouped bars with graduated fills and an unticked category axis."""
+    data = np.asarray(values, dtype=float)
+    if data.ndim != 2 or not all(data.shape):
+        raise ValueError("Grouped-bar values must be a non-empty 2D array.")
+    _validate_bar_options(width, orientation, kind="Grouped-bar")
+
+    series_count, group_count = data.shape
+    group_positions = _bar_positions(group_count, positions, kind="Grouped-bar")
+    if labels is not None and len(labels) != series_count:
+        raise ValueError("Grouped-bar labels must match the number of series.")
+    if categories is not None and len(categories) != group_count:
+        raise ValueError("Grouped-bar categories must match the number of groups.")
+
+    styles = bar_styles(_active_accent())
+    bar_width = width / series_count
+    offsets = (np.arange(series_count) - (series_count - 1) / 2) * bar_width
+    containers: list[BarContainer] = []
+    for index, (series, offset) in enumerate(zip(data, offsets, strict=True)):
+        style = styles[index % len(styles)]
+        defaults = _bar_defaults(style, kwargs)
+        if labels is not None:
+            defaults["label"] = labels[index]
+        centers = group_positions + offset
+        if orientation == "vertical":
+            container = ax.bar(centers, series, bar_width, **defaults)
+        else:
+            container = ax.barh(centers, series, bar_width, **defaults)
+        containers.append(container)
+
+    _format_bar_categories(ax, group_positions, categories, orientation)
+    return tuple(containers)
+
+
+def separated_bar(
+    ax: Axes,
+    values: ArrayLike,
+    *,
+    categories: Sequence[str] | None = None,
+    positions: ArrayLike | None = None,
+    width: float = 0.8,
+    orientation: Literal["vertical", "horizontal"] = "vertical",
+    **kwargs: Any,
+) -> BarContainer:
+    """Draw separate bars, advancing the active bar style for every bar."""
+    data = np.asarray(values, dtype=float)
+    if data.ndim != 1 or not len(data):
+        raise ValueError("Separated-bar values must be a non-empty 1D array.")
+    _validate_bar_options(width, orientation, kind="Separated-bar")
+    bar_positions = _bar_positions(len(data), positions, kind="Separated-bar")
+    if categories is not None and len(categories) != len(data):
+        raise ValueError("Separated-bar categories must match the number of bars.")
+
+    sequence = bar_styles(_active_accent())
+    styles = [sequence[index % len(sequence)] for index in range(len(data))]
+    defaults = _bar_defaults(
+        {
+            "facecolor": [style["facecolor"] for style in styles],
+            "hatch": [style["hatch"] for style in styles],
+        },
+        kwargs,
+    )
+    if orientation == "vertical":
+        container = ax.bar(bar_positions, data, width, **defaults)
+    else:
+        container = ax.barh(bar_positions, data, width, **defaults)
+    _format_bar_categories(ax, bar_positions, categories, orientation)
+    return container
 
 
 def errorbar(
@@ -70,7 +222,7 @@ def band(
     **kwargs: Any,
 ) -> PolyCollection:
     """Draw a paper-filled interval in the active accent."""
-    edge = _active_accent() if color is None else color
+    edge = _active_color() if color is None else color
     defaults: dict[str, Any] = {
         "facecolor": PAPER,
         "edgecolor": edge,
@@ -92,10 +244,8 @@ def stairs(
     **kwargs: Any,
 ) -> StepPatch:
     """Draw paper-filled stairs with equal hatch and outline widths."""
-    edge = _active_accent() if color is None else color
-    stroke = (
-        float(mpl.rcParams["patch.linewidth"]) if linewidth is None else linewidth
-    )
+    edge = _active_color() if color is None else color
+    stroke = float(mpl.rcParams["patch.linewidth"]) if linewidth is None else linewidth
     defaults: dict[str, Any] = {
         "fill": True,
         "facecolor": PAPER,
@@ -206,13 +356,13 @@ def technical_contour(
         raise ValueError("Technical contours may accent at most one level.")
     if not accented.issubset(values):
         raise ValueError("The accented contour level must be present in levels.")
-    accent = _active_accent()
+    accent = _active_color()
     colors = [accent if level in accented else INK for level in values]
     linewidths = [0.9 if level in accented else 0.55 for level in values]
 
     regions: QuadContourSet | None = None
     if filled:
-        region_hatches = list(_HATCHES if hatches is None else hatches)
+        region_hatches = list(CONTOUR_HATCHES if hatches is None else hatches)
         if not region_hatches:
             raise ValueError("Hatches must contain at least one pattern.")
         repeats = (len(values) - 1 + len(region_hatches) - 1) // len(region_hatches)
@@ -273,10 +423,13 @@ def map_linework(
 
 
 __all__ = [
+    "BarOrientation",
     "ContourLabelFormat",
     "band",
     "errorbar",
+    "grouped_bar",
     "map_linework",
+    "separated_bar",
     "stairs",
     "stipple",
     "technical_contour",

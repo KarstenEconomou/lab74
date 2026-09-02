@@ -14,6 +14,7 @@ from matplotlib.typing import ColorType
 from .palette import RULE
 
 type AxesInput = Axes | Iterable[AxesInput]
+type FrameStyle = Literal["open", "closed"]
 type MultipanelMode = Literal["framed", "open"]
 type TickAxis = Literal["both", "x", "y"]
 type TickStyle = Literal["default", "cross"]
@@ -22,8 +23,6 @@ type TickStyle = Literal["default", "cross"]
 class _MultipanelValues(TypedDict):
     hspace: float
     wspace: float
-    top: bool
-    right: bool
 
 
 class _TickValues(TypedDict):
@@ -35,8 +34,8 @@ class _TickValues(TypedDict):
 
 
 _MULTIPANEL_MODES: dict[MultipanelMode, _MultipanelValues] = {
-    "framed": {"hspace": 0.0, "wspace": 0.0, "top": True, "right": True},
-    "open": {"hspace": 0.06, "wspace": 0.06, "top": False, "right": False},
+    "framed": {"hspace": 0.0, "wspace": 0.0},
+    "open": {"hspace": 0.06, "wspace": 0.06},
 }
 
 _TICK_STYLES: dict[TickStyle, _TickValues] = {
@@ -86,14 +85,14 @@ def _axes_tuple(axes: AxesInput) -> tuple[Axes, ...]:
 def format_ticks(
     axes: AxesInput,
     *,
-    style: TickStyle = "default",
-    axis: TickAxis = "both",
+    style: Literal["default", "cross"] = "default",
+    axis: Literal["both", "x", "y"] = "both",
     major_length: float | None = None,
     minor_length: float | None = None,
     major_width: float | None = None,
     minor_width: float | None = None,
 ) -> tuple[Axes, ...]:
-    """Apply one tick style to a nested collection of axes."""
+    """Apply ``default`` or ``cross`` ticks to ``both``, ``x``, or ``y``."""
     if style not in _TICK_STYLES:
         choices = ", ".join(_TICK_STYLES)
         raise ValueError(
@@ -114,12 +113,8 @@ def format_ticks(
     resolved_minor_length = (
         values["minor_length"] if minor_length is None else minor_length
     )
-    resolved_major_width = (
-        values["major_width"] if major_width is None else major_width
-    )
-    resolved_minor_width = (
-        values["minor_width"] if minor_width is None else minor_width
-    )
+    resolved_major_width = values["major_width"] if major_width is None else major_width
+    resolved_minor_width = values["minor_width"] if minor_width is None else minor_width
     for ax in panels:
         ax.tick_params(
             axis=axis,
@@ -141,17 +136,19 @@ def format_ticks(
 def format_frame(
     axes: AxesInput,
     *,
-    top: bool = True,
-    right: bool = True,
+    style: Literal["open", "closed"] = "closed",
 ) -> tuple[Axes, ...]:
-    """Set the top and right spines and their ticks on one or more axes."""
+    """Apply an ``open`` or ``closed`` frame to one or more axes."""
+    if style not in ("open", "closed"):
+        raise ValueError("The frame style must be 'open' or 'closed'.")
     panels = _axes_tuple(axes)
     if not panels:
         raise ValueError("format_frame requires at least one Axes object.")
+    visible = style == "closed"
     for ax in panels:
-        ax.spines["top"].set_visible(top)
-        ax.spines["right"].set_visible(right)
-        ax.tick_params(which="both", top=top, right=right)
+        ax.spines["top"].set_visible(visible)
+        ax.spines["right"].set_visible(visible)
+        ax.tick_params(which="both", top=visible, right=visible)
     return panels
 
 
@@ -210,14 +207,12 @@ def format_graticule(
 def format_multipanel(
     axes: AxesInput,
     *,
-    mode: MultipanelMode = "framed",
-    tick_style: TickStyle = "default",
+    mode: Literal["framed", "open"] = "framed",
+    tick_style: Literal["default", "cross"] = "default",
     hspace: float | None = None,
     wspace: float | None = None,
-    top: bool | None = None,
-    right: bool | None = None,
 ) -> tuple[Axes, ...]:
-    """Apply a framed or open layout to axes from one figure."""
+    """Apply a ``framed`` or ``open`` layout and a named tick style."""
     if mode not in _MULTIPANEL_MODES:
         choices = ", ".join(_MULTIPANEL_MODES)
         raise ValueError(
@@ -242,17 +237,16 @@ def format_multipanel(
     defaults = _MULTIPANEL_MODES[mode]
     resolved_hspace = defaults["hspace"] if hspace is None else hspace
     resolved_wspace = defaults["wspace"] if wspace is None else wspace
-    resolved_top = defaults["top"] if top is None else top
-    resolved_right = defaults["right"] if right is None else right
     figure.subplots_adjust(hspace=resolved_hspace, wspace=resolved_wspace)
 
-    format_frame(panels, top=resolved_top, right=resolved_right)
+    format_frame(panels, style="closed" if mode == "framed" else "open")
     format_ticks(panels, style=tick_style)
     return panels
 
 
 __all__ = [
     "AxesInput",
+    "FrameStyle",
     "MultipanelMode",
     "TickAxis",
     "TickStyle",

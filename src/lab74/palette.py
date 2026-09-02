@@ -19,6 +19,14 @@ PAPER: Final = "#FFFFFF"
 INK: Final = "#101112"
 RULE: Final = "#D7DBDC"
 
+# Ordered light-to-dark for distinguishing multiple series without an accent.
+MONOCHROME_LINE_COLORS: Final[tuple[str, ...]] = (
+    "#858788",
+    "#606263",
+    "#393A3B",
+    INK,
+)
+
 ACCENTS: Final[Mapping[AccentName, str]] = MappingProxyType(
     {
         "instrument": "#CB6015",
@@ -33,7 +41,18 @@ ACCENTS: Final[Mapping[AccentName, str]] = MappingProxyType(
 )
 
 
-def get_accent(name: AccentName) -> str:
+def get_accent(
+    name: Literal[
+        "instrument",
+        "aerospace",
+        "oxide",
+        "laboratory",
+        "prairie",
+        "marlin",
+        "technical",
+        "fermilab",
+    ],
+) -> str:
     """Return the hexadecimal value of a named accent."""
     try:
         return ACCENTS[name]
@@ -45,4 +64,12 @@ def get_accent(name: AccentName) -> str:
         ) from exc
 
 
-__all__ = ["ACCENTS", "INK", "PAPER", "RULE", "AccentName", "get_accent"]
+__all__ = [
+    "ACCENTS",
+    "INK",
+    "MONOCHROME_LINE_COLORS",
+    "PAPER",
+    "RULE",
+    "AccentName",
+    "get_accent",
+]

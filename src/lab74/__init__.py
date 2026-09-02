@@ -5,20 +5,22 @@ from typing import Final, Literal
 
 import matplotlib as mpl
 import matplotlib.style as mpl_style
-from cycler import Cycler, cycler
 
+from . import sequences
 from ._fonts import GOTHIC_FONT, TECHNICAL_FONT
 from .annotations import (
     DirectLabelStyle,
     LabelLocation,
     direct_label,
     leader,
+    legend,
     overflow_label,
     plate_label,
     source_note,
 )
 from .layout import (
     AxesInput,
+    FrameStyle,
     MultipanelMode,
     TickAxis,
     TickStyle,
@@ -27,39 +29,54 @@ from .layout import (
     format_multipanel,
     format_ticks,
 )
-from .palette import ACCENTS, INK, PAPER, RULE, AccentName, get_accent
+from .palette import (
+    ACCENTS,
+    INK,
+    MONOCHROME_LINE_COLORS,
+    PAPER,
+    RULE,
+    AccentName,
+    get_accent,
+)
 from .primitives import (
+    BarOrientation,
     ContourLabelFormat,
     band,
     errorbar,
+    grouped_bar,
     map_linework,
+    separated_bar,
     stairs,
     stipple,
     technical_contour,
 )
+from .sequences import line_cycle
 
 STYLE_PATH: Final = Path(__file__).with_name("lab74.mplstyle")
 type FontFace = Literal["mono", "gothic"]
 
 
-def _property_cycle(accent: str) -> Cycler:
-    """Return the six-series cycle for the specified accent."""
-    return (
-        cycler(color=[accent, INK, INK, INK, INK, INK])
-        + cycler(linestyle=["-", "-", "--", ":", "-.", (0, (5, 2, 1, 2))])
-        + cycler(marker=["o", "s", "^", "D", "x", "+"])
-    )
-
-
 def use(
-    accent: AccentName | None = "instrument", *, face: FontFace = "gothic"
+    accent: Literal[
+        "instrument",
+        "aerospace",
+        "oxide",
+        "laboratory",
+        "prairie",
+        "marlin",
+        "technical",
+        "fermilab",
+    ]
+    | None = "instrument",
+    *,
+    face: Literal["mono", "gothic"] = "gothic",
 ) -> None:
-    """Apply the style, selected typeface, and optional accent color."""
+    """Apply a named accent (or none) and a ``mono`` or ``gothic`` face."""
     if face not in ("mono", "gothic"):
         raise ValueError("The font face must be 'mono' or 'gothic'.")
-    color = INK if accent is None else get_accent(accent)
+    color = None if accent is None else get_accent(accent)
     mpl_style.use(STYLE_PATH)
-    mpl.rcParams["axes.prop_cycle"] = _property_cycle(color)
+    mpl.rcParams["axes.prop_cycle"] = line_cycle(color)
     font = GOTHIC_FONT if face == "gothic" else TECHNICAL_FONT
     mpl.rcParams["font.family"] = [font]
     mpl.rcParams["mathtext.rm"] = font
@@ -71,14 +88,17 @@ def use(
 __all__ = [
     "ACCENTS",
     "INK",
+    "MONOCHROME_LINE_COLORS",
     "PAPER",
     "RULE",
     "STYLE_PATH",
     "AccentName",
     "AxesInput",
+    "BarOrientation",
     "ContourLabelFormat",
     "DirectLabelStyle",
     "FontFace",
+    "FrameStyle",
     "LabelLocation",
     "MultipanelMode",
     "TickAxis",
@@ -91,12 +111,16 @@ __all__ = [
     "format_multipanel",
     "format_ticks",
     "get_accent",
+    "grouped_bar",
     "map_linework",
     "leader",
+    "legend",
     "overflow_label",
     "plate_label",
     "stipple",
     "source_note",
+    "sequences",
+    "separated_bar",
     "stairs",
     "technical_contour",
     "use",
