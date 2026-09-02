@@ -1,0 +1,30 @@
+[project]
+name = "lab74"
+version = "0.1.0"
+description = "Matplotlib style layer for scientific and institutional figures in the technical print style of ca. 1965–1980."
+readme = "README.md"
+authors = [
+    { name = "Karsten Economou", email = "economoukarsten@gmail.com" },
+]
+requires-python = ">=3.12"
+dependencies = [
+    "matplotlib>=3.8",
+    "numpy>=1.26",
+]
+
+[dependency-groups]
+dev = [
+    "ipykernel>=6.29",
+    "nbclient>=0.10",
+    "nbformat>=5.10",
+    "pytest>=8.0",
+    "scipy>=1.14",
+]
+
+[build-system]
+requires = ["uv_build>=0.12.5,<0.13.0"]
+build-backend = "uv_build"
+
+[tool.pytest.ini_options]
+addopts = "-ra"
+testpaths = ["tests"]

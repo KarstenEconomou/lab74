@@ -1,0 +1,100 @@
+# Define the base lab74 figure, type, line, tick, legend, and export settings.
+
+figure.figsize: 6.5, 3.65
+figure.facecolor: "#FFFFFF"
+figure.edgecolor: "#FFFFFF"
+figure.labelsize: 8.5
+figure.labelweight: normal
+figure.subplot.left: 0.10
+figure.subplot.right: 0.995
+figure.subplot.bottom: 0.14
+figure.subplot.top: 0.985
+
+axes.facecolor: "#FFFFFF"
+axes.edgecolor: "#101112"
+axes.linewidth: 0.6
+axes.labelcolor: "#101112"
+axes.labelsize: 8.5
+axes.labelpad: 6
+axes.titlesize: 10
+axes.titleweight: normal
+axes.titlepad: 6
+axes.grid: False
+axes.axisbelow: False
+axes.spines.left: True
+axes.spines.bottom: True
+axes.spines.top: True
+axes.spines.right: True
+axes.prop_cycle: cycler('color', ["#CB6015", "#101112", "#101112", "#101112", "#101112", "#101112"]) + cycler('linestyle', ['-', '-', '--', ':', '-.', (0, (5, 2, 1, 2))]) + cycler('marker', ['o', 's', '^', 'D', 'x', '+'])
+
+font.family: IBM Plex Sans Condensed
+font.sans-serif: IBM Plex Sans Condensed, DejaVu Sans
+font.monospace: IBM Plex Mono, DejaVu Sans Mono
+font.size: 8.5
+text.color: "#101112"
+mathtext.fontset: custom
+mathtext.default: it
+mathtext.rm: IBM Plex Sans Condensed
+mathtext.it: IBM Plex Sans Condensed:italic
+mathtext.bf: IBM Plex Sans Condensed:bold
+mathtext.sf: IBM Plex Sans Condensed
+mathtext.tt: monospace
+mathtext.fallback: stix
+
+lines.linewidth: 0.55
+lines.markersize: 3.0
+# Use the paper color in a hollow marker to hide the line below the marker.
+lines.markerfacecolor: "#FFFFFF"
+lines.markeredgewidth: 0.55
+patch.facecolor: "#FFFFFF"
+patch.edgecolor: "#101112"
+patch.linewidth: 0.55
+hatch.color: edge
+hatch.linewidth: 0.45
+
+xtick.color: "#101112"
+ytick.color: "#101112"
+xtick.labelsize: 7.5
+ytick.labelsize: 7.5
+xtick.direction: in
+ytick.direction: in
+xtick.top: True
+ytick.right: True
+xtick.major.size: 5.0
+ytick.major.size: 5.0
+xtick.major.width: 0.55
+ytick.major.width: 0.55
+xtick.major.pad: 3
+ytick.major.pad: 3
+xtick.minor.visible: True
+ytick.minor.visible: True
+xtick.minor.size: 3.0
+ytick.minor.size: 3.0
+xtick.minor.width: 0.45
+ytick.minor.width: 0.45
+
+errorbar.capsize: 2.0
+
+legend.fontsize: 7.5
+legend.frameon: False
+legend.fancybox: False
+legend.shadow: False
+legend.framealpha: 1.0
+legend.borderpad: 0.25
+legend.labelspacing: 0.25
+legend.handlelength: 1.0
+legend.handleheight: 1.0
+legend.handletextpad: 0.3
+legend.columnspacing: 0.8
+legend.numpoints: 1
+legend.scatterpoints: 1
+
+savefig.dpi: 300
+savefig.facecolor: "#FFFFFF"
+savefig.edgecolor: "#FFFFFF"
+savefig.transparent: False
+savefig.bbox: tight
+savefig.pad_inches: 0.015
+pdf.fonttype: 42
+ps.fonttype: 42
+svg.fonttype: none
