@@ -52,10 +52,8 @@ def plate_label(
     ax: Axes,
     text: str,
     *,
-    loc: Literal["upper left", "upper right", "lower left", "lower right"] = (
-        "upper left"
-    ),
-    style: Literal["emphasized"] | None = None,
+    loc: LabelLocation = "upper left",
+    style: DirectLabelStyle | None = None,
     color: ColorType = INK,
     **kwargs: Any,
 ) -> Text:
@@ -73,7 +71,7 @@ def plate_label(
     xy, ha, va = _LOCATIONS[loc]
     inset_transform = offset_copy(
         ax.transAxes,
-        fig=ax.figure,
+        fig=ax.get_figure(root=True),
         x=4 if ha == "left" else -4,
         y=4 if va == "bottom" else -4,
         units="points",
@@ -114,7 +112,7 @@ def legend(ax: Axes, *args: Any, **kwargs: Any) -> Legend:
                 "bbox_to_anchor": anchor,
                 "bbox_transform": offset_copy(
                     ax.transAxes,
-                    fig=ax.figure,
+                    fig=ax.get_figure(root=True),
                     x=x_offset,
                     y=y_offset,
                     units="points",
@@ -188,7 +186,7 @@ def direct_label(
     text: str,
     *,
     offset: tuple[float, float] = (4, 0),
-    style: Literal["emphasized"] | None = None,
+    style: DirectLabelStyle | None = None,
     color: ColorType = INK,
     **kwargs: Any,
 ) -> Annotation:
@@ -270,8 +268,9 @@ def overflow_label(
     )
 
     half_height = marker_height / 2
-    markers = tuple(
-        ax.plot(
+
+    def edge_marker(x: float) -> Line2D:
+        return ax.plot(
             [x, x],
             [y - half_height, y + half_height],
             transform=transform,
@@ -281,8 +280,8 @@ def overflow_label(
             marker="",
             clip_on=False,
         )[0]
-        for x in xspan
-    )
+
+    markers = (edge_marker(left), edge_marker(right))
     return labelled, unlabelled, markers
 
 

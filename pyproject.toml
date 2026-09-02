@@ -3,14 +3,29 @@ name = "lab74"
 version = "0.1.0"
 description = "Matplotlib style layer for scientific and institutional figures in the technical print style of ca. 1965–1980."
 readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
 authors = [
     { name = "Karsten Economou", email = "economoukarsten@gmail.com" },
 ]
 requires-python = ">=3.12"
+keywords = ["matplotlib", "plotting", "style", "scientific-visualization"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Topic :: Scientific/Engineering :: Visualization",
+    "Typing :: Typed",
+]
 dependencies = [
     "matplotlib>=3.8",
     "numpy>=1.26",
 ]
+
+[project.urls]
+Homepage = "https://github.com/KarstenEconomou/lab74"
+Repository = "https://github.com/KarstenEconomou/lab74"
 
 [dependency-groups]
 dev = [

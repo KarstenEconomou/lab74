@@ -112,7 +112,7 @@ def grouped_bar(
     categories: Sequence[str] | None = None,
     positions: ArrayLike | None = None,
     width: float = 0.8,
-    orientation: Literal["vertical", "horizontal"] = "vertical",
+    orientation: BarOrientation = "vertical",
     **kwargs: Any,
 ) -> tuple[BarContainer, ...]:
     """Draw grouped bars with graduated fills and an unticked category axis."""
@@ -155,7 +155,7 @@ def separated_bar(
     categories: Sequence[str] | None = None,
     positions: ArrayLike | None = None,
     width: float = 0.8,
-    orientation: Literal["vertical", "horizontal"] = "vertical",
+    orientation: BarOrientation = "vertical",
     **kwargs: Any,
 ) -> BarContainer:
     """Draw separate bars, advancing the active bar style for every bar."""
@@ -277,14 +277,12 @@ def stipple(
 ) -> PathCollection:
     """Fill a polygon with dots at an approximate density per square inch.
 
-    Set the final axes limits before this call because density uses the current
-    data transform.
+    Density uses the current data transform. Set the final axes limits
+    before this call.
     """
     data_vertices = np.asarray(vertices, dtype=float)
     if data_vertices.ndim != 2 or data_vertices.shape[1] != 2 or len(data_vertices) < 3:
-        raise ValueError(
-            "The vertices must have shape (n, 2) and at least three points."
-        )
+        raise ValueError("The vertices must have shape (n, 2) and at least 3 points.")
     if not np.isfinite(data_vertices).all():
         raise ValueError("The vertices must contain only finite values.")
     if not isfinite(density) or density < 0:
@@ -346,14 +344,14 @@ def technical_contour(
     """Draw explicit contour levels and optional hatched regions."""
     values = list(levels)
     if len(values) < 2:
-        raise ValueError("Technical contours require at least two explicit levels.")
+        raise ValueError("Technical contours require at least 2 explicit levels.")
     if not all(isfinite(value) for value in values):
         raise ValueError("Technical contour levels must be finite.")
     if any(first >= second for first, second in pairwise(values)):
         raise ValueError("Technical contour levels must be in increasing order.")
     accented = set(accent_levels)
     if len(accented) > 1:
-        raise ValueError("Technical contours may accent at most one level.")
+        raise ValueError("Technical contours may accent at most 1 level.")
     if not accented.issubset(values):
         raise ValueError("The accented contour level must be present in levels.")
     accent = _active_color()
@@ -364,7 +362,7 @@ def technical_contour(
     if filled:
         region_hatches = list(CONTOUR_HATCHES if hatches is None else hatches)
         if not region_hatches:
-            raise ValueError("Hatches must contain at least one pattern.")
+            raise ValueError("Hatches must contain at least 1 pattern.")
         repeats = (len(values) - 1 + len(region_hatches) - 1) // len(region_hatches)
         region_hatches = (region_hatches * repeats)[: len(values) - 1]
         regions = ax.contourf(

@@ -41,18 +41,7 @@ ACCENTS: Final[Mapping[AccentName, str]] = MappingProxyType(
 )
 
 
-def get_accent(
-    name: Literal[
-        "instrument",
-        "aerospace",
-        "oxide",
-        "research",
-        "survey",
-        "telemetry",
-        "technology",
-        "laboratory",
-    ],
-) -> str:
+def get_accent(name: AccentName) -> str:
     """Return the hexadecimal value of a named accent."""
     try:
         return ACCENTS[name]

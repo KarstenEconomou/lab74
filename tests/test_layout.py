@@ -30,7 +30,7 @@ def test_format_ticks_supports_default_and_cross_styles():
 def test_format_ticks_rejects_unknown_style():
     _, ax = plt.subplots()
     with pytest.raises(ValueError, match="unknown tick style"):
-        lab74.format_ticks(ax, style="ornamental")
+        lab74.format_ticks(ax, style="ornamental")  # ty: ignore[invalid-argument-type]
 
 
 def test_format_ticks_supports_axis_specific_size_override():
@@ -82,7 +82,7 @@ def test_format_frame_defaults_to_closed_and_rejects_unknown_style():
     assert ax.spines["top"].get_visible()
     assert ax.spines["right"].get_visible()
     with pytest.raises(ValueError, match="frame style"):
-        lab74.format_frame(ax, style="half-open")
+        lab74.format_frame(ax, style="half-open")  # ty: ignore[invalid-argument-type]
 
 
 def test_format_graticule_draws_degree_labels_without_cartesian_axes():
@@ -196,7 +196,7 @@ def test_format_multipanel_rejects_unknown_mode():
     _, ax = plt.subplots()
 
     with pytest.raises(ValueError, match="unknown multipanel mode"):
-        lab74.format_multipanel(ax, mode="cards")
+        lab74.format_multipanel(ax, mode="cards")  # ty: ignore[invalid-argument-type]
 
 
 @pytest.mark.parametrize("formatter", [lab74.format_ticks, lab74.format_frame])
@@ -206,7 +206,7 @@ def test_axes_formatters_reject_invalid_containers(formatter):
 
 
 def test_axes_formatters_reject_empty_and_recursive_containers():
-    with pytest.raises(ValueError, match="at least one"):
+    with pytest.raises(ValueError, match="at least 1"):
         lab74.format_ticks([])
 
     recursive = []

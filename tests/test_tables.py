@@ -66,17 +66,20 @@ def test_table_draws_sparse_technical_text_and_rule_on_supplied_axes():
     ]
     assert all(text in ax.texts and text not in other.texts for text in texts)
     assert all(
-        text.get_fontfamily() == ["IBM Plex Sans Condensed"]
-        for text in texts[:3]
+        text.get_fontfamily() == ["IBM Plex Sans Condensed"] for text in texts[:3]
     )
     assert all(text.get_fontfamily() == ["IBM Plex Mono"] for text in texts[3:])
     assert all(text.get_fontweight() == "bold" for text in texts[:3])
-    assert texts[0].get_fontsize() == pytest.approx(texts[1].get_fontsize() + 1)
+    assert texts[0].get_fontsize() == pytest.approx(
+        texts[1].get_fontsize() + 1  # ty: ignore[unsupported-operator]
+    )
     assert texts[3].get_fontweight() == "medium"
     assert texts[4].get_fontweight() == "normal"
     assert len(rules) == 1 and rules[0] in ax.lines
     assert rules[0].get_color() == lab74.INK
-    np.testing.assert_allclose(rules[0].get_xdata(), [0.02, 0.98])
+    np.testing.assert_allclose(  # ty: ignore[no-matching-overload]
+        rules[0].get_xdata(), [0.02, 0.98]
+    )
     assert texts[0].get_position()[0] == pytest.approx(0.02)
     assert texts[2].get_position()[0] == pytest.approx(1 / 3 + 0.02)
 
@@ -97,9 +100,7 @@ def test_table_swatch_has_an_independent_fill_and_label():
         if isinstance(artist, Text) and artist.get_text() == "#CB6015"
     ]
     assert len(swatches) == 1 and swatches[0] in ax.patches
-    assert swatches[0].get_facecolor() == pytest.approx(
-        mpl.colors.to_rgba("#CB6015")
-    )
+    assert swatches[0].get_facecolor() == pytest.approx(mpl.colors.to_rgba("#CB6015"))
     assert swatches[0].get_linewidth() == 0
     assert len(labels) == 1
     assert labels[0].get_color() == lab74.INK
@@ -108,14 +109,16 @@ def test_table_swatch_has_an_independent_fill_and_label():
         for artist in artists
         if isinstance(artist, Text) and artist.get_text() == "INSTRUMENT"
     )
-    assert labels[0].get_fontsize() == pytest.approx(body_label.get_fontsize() - 1)
+    assert labels[0].get_fontsize() == pytest.approx(
+        body_label.get_fontsize() - 1  # ty: ignore[unsupported-operator]
+    )
     assert labels[0].get_position()[1] < swatches[0].get_y()
-    actual_bottom = swatches[0].get_data_transform().transform(
-        (swatches[0].get_x(), swatches[0].get_y())
+    actual_bottom = (
+        swatches[0]
+        .get_data_transform()
+        .transform((swatches[0].get_x(), swatches[0].get_y()))
     )
-    axes_bottom = ax.transAxes.transform(
-        (swatches[0].get_x(), swatches[0].get_y())
-    )
+    axes_bottom = ax.transAxes.transform((swatches[0].get_x(), swatches[0].get_y()))
     np.testing.assert_allclose(actual_bottom, axes_bottom + (0, fig.dpi / 72))
 
 
@@ -153,13 +156,13 @@ def test_paper_swatch_gets_a_rule_outline_and_generated_hex_label():
 @pytest.mark.parametrize(
     ("rows", "kwargs", "message"),
     [
-        ([], {"columns": ["A"]}, "at least one row"),
-        ([[]], {"columns": []}, "at least one column"),
-        ([['A']], {"columns": ["A", "B"]}, "match the number"),
-        ([['A']], {"columns": ["A"], "column_widths": [1, 2]}, "Column widths"),
-        ([['A']], {"columns": ["A"], "column_widths": [0]}, "positive"),
-        ([['A']], {"columns": ["A"], "bbox": (0, 0, 0, 1)}, "positive"),
-        ([['A']], {"columns": ["A"], "bbox": (0.5, 0, 0.6, 1)}, "contained"),
+        ([], {"columns": ["A"]}, "at least 1 row"),
+        ([[]], {"columns": []}, "at least 1 column"),
+        ([["A"]], {"columns": ["A", "B"]}, "match the number"),
+        ([["A"]], {"columns": ["A"], "column_widths": [1, 2]}, "Column widths"),
+        ([["A"]], {"columns": ["A"], "column_widths": [0]}, "positive"),
+        ([["A"]], {"columns": ["A"], "bbox": (0, 0, 0, 1)}, "positive"),
+        ([["A"]], {"columns": ["A"], "bbox": (0.5, 0, 0.6, 1)}, "contained"),
     ],
 )
 def test_table_rejects_invalid_layout(rows, kwargs, message):
@@ -171,7 +174,7 @@ def test_table_rejects_invalid_layout(rows, kwargs, message):
 def test_table_rejects_unsupported_cells_and_invalid_swatch_colors():
     _, ax = plt.subplots()
     with pytest.raises(TypeError, match="strings or TableSwatch"):
-        lab74.table(ax, [[42]], columns=["VALUE"])
+        lab74.table(ax, [[42]], columns=["VALUE"])  # ty: ignore[invalid-argument-type]
     with pytest.raises(ValueError, match="swatch color is invalid"):
         lab74.table(
             ax,

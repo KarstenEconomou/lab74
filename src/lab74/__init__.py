@@ -58,19 +58,9 @@ type FontFace = Literal["mono", "gothic"]
 
 
 def use(
-    accent: Literal[
-        "instrument",
-        "aerospace",
-        "oxide",
-        "research",
-        "survey",
-        "telemetry",
-        "technology",
-        "laboratory",
-    ]
-    | None = "instrument",
+    accent: AccentName | None = "instrument",
     *,
-    face: Literal["mono", "gothic"] = "gothic",
+    face: FontFace = "gothic",
 ) -> None:
     """Apply a named accent (or none) and a ``mono`` or ``gothic`` face."""
     if face not in ("mono", "gothic"):

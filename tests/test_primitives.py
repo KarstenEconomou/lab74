@@ -72,7 +72,7 @@ def test_emphasized_plate_label_adds_caps_tracking_and_italics():
     assert label.get_text() == "A P O L L O   1 7   P R O B E   1"
     assert label.get_fontstyle() == "italic"
     with pytest.raises(ValueError, match="plate-label style"):
-        lab74.plate_label(ax, "INVALID", style="display")
+        lab74.plate_label(ax, "INVALID", style="display")  # ty: ignore[invalid-argument-type]
 
 
 def test_legend_title_and_entries_are_left_aligned():
@@ -103,7 +103,7 @@ def test_legend_offsets_follow_visible_frame_edges(
     legend = lab74.legend(ax, loc=loc)
     fig.canvas.draw()
 
-    bounds = legend.get_window_extent(fig.canvas.get_renderer())
+    bounds = legend.get_window_extent(fig.canvas.get_renderer())  # ty: ignore[unresolved-attribute]
     actual = np.array([getattr(bounds, coordinate) for coordinate in legend_corner])
     expected = ax.transAxes.transform(axes_anchor) + np.array(offset) * fig.dpi / 72
     np.testing.assert_allclose(actual, expected)
@@ -137,7 +137,8 @@ def test_overflow_label_marks_region_edges_and_uses_mixed_coordinates():
     assert len(markers) == 2
     assert all(marker in ax.lines for marker in markers)
     np.testing.assert_allclose(
-        [marker.get_xdata()[0] for marker in markers], [3.05, 3.075]
+        [marker.get_xdata()[0] for marker in markers],  # ty: ignore[not-subscriptable]
+        [3.05, 3.075],
     )
     with pytest.raises(ValueError, match="increasing edges"):
         lab74.overflow_label(ax, "invalid", (3.1, 3.0))
@@ -151,7 +152,7 @@ def test_emphasized_direct_label_adds_caps_tracking_and_italics():
     assert label.get_text() == "A P O L L O   1 5   P R O B E   1"
     assert label.get_fontstyle() == "italic"
     with pytest.raises(ValueError, match="direct-label style"):
-        lab74.direct_label(ax, 1, 2, "INVALID", style="display")
+        lab74.direct_label(ax, 1, 2, "INVALID", style="display")  # ty: ignore[invalid-argument-type]
 
 
 def test_band_uses_active_accent_and_hatch():
@@ -163,7 +164,9 @@ def test_band_uses_active_accent_and_hatch():
     assert band in ax.collections
     assert band.get_hatch() == "//"
     assert band.get_edgecolor()[0] == pytest.approx((0.0, 133 / 255, 173 / 255, 1.0))
-    np.testing.assert_allclose(band.get_hatchcolor(), band.get_edgecolor())
+    np.testing.assert_allclose(  # ty: ignore[no-matching-overload]
+        band.get_hatchcolor(), band.get_edgecolor()
+    )
 
 
 def test_grouped_bar_uses_graduated_defaults_and_unticked_category_axis():
@@ -300,7 +303,7 @@ def test_band_and_stairs_accept_matplotlib_property_overrides():
     )
 
     assert interval.get_hatch() == "x"
-    assert interval.get_linewidths() == pytest.approx([1.2])
+    assert interval.get_linewidths() == pytest.approx([1.2])  # ty: ignore[unresolved-attribute]
     assert steps.get_hatch() == ""
     assert not steps.get_fill()
     assert steps.get_linewidth() == pytest.approx(1.1)
@@ -315,7 +318,7 @@ def test_stairs_uses_matplotlib_legend_handler_without_global_mutation():
     legend = ax.legend()
 
     assert stairs.get_hatch() == "//"
-    assert legend.legend_handles[0].get_hatch() == "//"
+    assert legend.legend_handles[0].get_hatch() == "//"  # ty: ignore[unresolved-attribute]
     assert Legend.get_default_handler_map()[StepPatch] is original_handler
 
 
@@ -351,8 +354,10 @@ def test_stipple_is_deterministic_and_uses_supplied_axes():
     first = lab74.stipple(ax, vertices, density=20, seed=7)
     second = lab74.stipple(ax, vertices, density=20, seed=7)
     assert isinstance(first, PathCollection)
-    np.testing.assert_allclose(first.get_offsets(), second.get_offsets())
-    assert len(first.get_offsets()) > 0
+    np.testing.assert_allclose(  # ty: ignore[no-matching-overload]
+        first.get_offsets(), second.get_offsets()
+    )
+    assert len(first.get_offsets()) > 0  # ty: ignore[invalid-argument-type]
     assert Path(vertices).contains_points(first.get_offsets()).all()
 
 
@@ -376,7 +381,7 @@ def test_technical_contour_line_and_filled_modes():
         for index in (1, 3, 5)
     )
     np.testing.assert_allclose(
-        lines.get_edgecolors(),
+        lines.get_edgecolors(),  # ty: ignore[unresolved-attribute]
         [
             (*expected_ink, 1),
             (*expected_ink, 1),
@@ -385,15 +390,21 @@ def test_technical_contour_line_and_filled_modes():
             (*expected_ink, 1),
         ],
     )
-    np.testing.assert_allclose(lines.get_linewidths(), [0.55, 0.55, 0.9, 0.55, 0.55])
+    np.testing.assert_allclose(
+        lines.get_linewidths(),  # ty: ignore[unresolved-attribute]
+        [0.55, 0.55, 0.9, 0.55, 0.55],
+    )
     lines2, regions2 = lab74.technical_contour(
         ax2, x, y, z, levels=[-2, -1, 0, 1, 2], filled=True
     )
     assert isinstance(lines2, QuadContourSet)
     assert isinstance(regions2, QuadContourSet)
     assert regions2.hatches == ["", "/", "\\", "x"]
-    np.testing.assert_allclose(regions2.get_facecolors(), np.ones((4, 4)))
-    with pytest.raises(ValueError, match="at most one"):
+    np.testing.assert_allclose(
+        regions2.get_facecolors(),  # ty: ignore[unresolved-attribute]
+        np.ones((4, 4)),
+    )
+    with pytest.raises(ValueError, match="at most 1"):
         lab74.technical_contour(
             ax1,
             x,

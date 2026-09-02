@@ -82,24 +82,15 @@ def bar_styles(accent: ColorType | None) -> tuple[dict[str, Any], ...]:
     )
 
 
-# Compatibility names for the original grouped-bar-specific API.
-GROUPED_BAR_WITH_ACCENT = BAR_WITH_ACCENT
-GROUPED_BAR_WITHOUT_ACCENT = BAR_WITHOUT_ACCENT
-grouped_bar_styles = bar_styles
-
-
 __all__ = [
     "BAR_WITHOUT_ACCENT",
     "BAR_WITH_ACCENT",
     "CONTOUR_HATCHES",
-    "GROUPED_BAR_WITHOUT_ACCENT",
-    "GROUPED_BAR_WITH_ACCENT",
     "LINE_WITHOUT_ACCENT",
     "LINE_WITH_ACCENT",
     "BarSeries",
     "ColorRole",
     "LineSeries",
     "bar_styles",
-    "grouped_bar_styles",
     "line_cycle",
 ]

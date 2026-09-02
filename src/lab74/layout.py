@@ -85,8 +85,8 @@ def _axes_tuple(axes: AxesInput) -> tuple[Axes, ...]:
 def format_ticks(
     axes: AxesInput,
     *,
-    style: Literal["default", "cross"] = "default",
-    axis: Literal["both", "x", "y"] = "both",
+    style: TickStyle = "default",
+    axis: TickAxis = "both",
     major_length: float | None = None,
     minor_length: float | None = None,
     major_width: float | None = None,
@@ -104,7 +104,7 @@ def format_ticks(
 
     panels = _axes_tuple(axes)
     if not panels:
-        raise ValueError("format_ticks requires at least one Axes object.")
+        raise ValueError("format_ticks requires at least 1 Axes object.")
 
     values = _TICK_STYLES[style]
     resolved_major_length = (
@@ -136,14 +136,14 @@ def format_ticks(
 def format_frame(
     axes: AxesInput,
     *,
-    style: Literal["open", "closed"] = "closed",
+    style: FrameStyle = "closed",
 ) -> tuple[Axes, ...]:
     """Apply an ``open`` or ``closed`` frame to one or more axes."""
     if style not in ("open", "closed"):
         raise ValueError("The frame style must be 'open' or 'closed'.")
     panels = _axes_tuple(axes)
     if not panels:
-        raise ValueError("format_frame requires at least one Axes object.")
+        raise ValueError("format_frame requires at least 1 Axes object.")
     visible = style == "closed"
     for ax in panels:
         ax.spines["top"].set_visible(visible)
@@ -207,8 +207,8 @@ def format_graticule(
 def format_multipanel(
     axes: AxesInput,
     *,
-    mode: Literal["framed", "open"] = "framed",
-    tick_style: Literal["default", "cross"] = "default",
+    mode: MultipanelMode = "framed",
+    tick_style: TickStyle = "default",
     hspace: float | None = None,
     wspace: float | None = None,
 ) -> tuple[Axes, ...]:
@@ -228,7 +228,7 @@ def format_multipanel(
 
     panels = _axes_tuple(axes)
     if not panels:
-        raise ValueError("format_multipanel requires at least one Axes object.")
+        raise ValueError("format_multipanel requires at least 1 Axes object.")
 
     figure = panels[0].figure
     if any(ax.figure is not figure for ax in panels):

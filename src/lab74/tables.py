@@ -5,9 +5,11 @@ from __future__ import annotations
 from collections.abc import Sequence
 from dataclasses import dataclass
 from math import isfinite
+from typing import Any
 
 import matplotlib as mpl
 import matplotlib.patheffects as path_effects
+from matplotlib import font_manager
 from matplotlib.artist import Artist
 from matplotlib.axes import Axes
 from matplotlib.lines import Line2D
@@ -30,8 +32,8 @@ _SWATCH_ROW_UNITS = 1.75
 class TableSwatch:
     """Describe a color bar with an optional label and outline.
 
-    The label defaults to an uppercase hexadecimal value. Paper-colored
-    swatches receive a thin ``RULE`` outline unless an edge color is supplied.
+    The label defaults to an uppercase hexadecimal value. A paper-colored
+    swatch without an edge color receives a thin ``RULE`` outline.
     """
 
     color: ColorType
@@ -46,7 +48,7 @@ type TableCell = str | TableSwatch
 def _font_size_points(value: float | str) -> float:
     """Return a validated Matplotlib font size in points."""
     try:
-        size = mpl.font_manager.FontProperties(size=value).get_size_in_points()
+        size = font_manager.FontProperties(size=value).get_size_in_points()
     except (TypeError, ValueError) as exc:
         raise ValueError("The font size is invalid.") from exc
     if not isfinite(size) or size <= 0:
@@ -66,7 +68,7 @@ def header(
     color: ColorType = INK,
     fontsize: float | None = None,
 ) -> tuple[Text, Text, Text]:
-    """Draw a uniform two-line technical-document header."""
+    """Draw a uniform 2-line technical-document header."""
     if not all(isinstance(value, str) for value in (name, title, revision)):
         raise TypeError("Header name, title, and revision must be strings.")
     if not isfinite(y) or not 0 <= y <= 1:
@@ -86,18 +88,18 @@ def header(
     name_size = resolved_size + _SECTION_SIZE_OFFSET
     second_line = offset_copy(
         ax.transAxes,
-        fig=ax.figure,
+        fig=ax.get_figure(root=True),
         y=-line_offset,
         units="points",
     )
-    defaults = {
+    defaults: dict[str, Any] = {
         "va": "top",
         "clip_on": False,
         "color": color,
         "fontsize": resolved_size,
         "fontfamily": TECHNICAL_FONT,
     }
-    name_defaults = defaults | {
+    name_defaults: dict[str, Any] = defaults | {
         "fontsize": name_size,
         "fontweight": "bold",
         "path_effects": [path_effects.withStroke(linewidth=0.2, foreground=color)],
@@ -114,7 +116,7 @@ def _validated_bbox(
 ) -> tuple[float, float, float, float]:
     """Return a finite, positive bounding box contained by the axes."""
     if len(bbox) != 4:
-        raise ValueError("The table bounding box must contain four values.")
+        raise ValueError("The table bounding box must contain 4 values.")
     left, bottom, width, height = (float(value) for value in bbox)
     if not all(isfinite(value) for value in (left, bottom, width, height)):
         raise ValueError("The table bounding box must contain only finite values.")
@@ -156,13 +158,13 @@ def table(
     """Draw a sparse table in axes coordinates and return its artists.
 
     A :class:`TableSwatch` uses a double-height row to place a solid color bar
-    above its label. Text is preserved exactly as supplied.
+    above its label. This function keeps cell text exactly as given.
     """
     if isinstance(columns, (str, bytes)):
         raise TypeError("Table columns must be a sequence of headings.")
     headings = tuple(columns)
     if not headings:
-        raise ValueError("A table requires at least one column.")
+        raise ValueError("A table requires at least 1 column.")
     if not all(isinstance(heading, str) for heading in headings):
         raise TypeError("Table column headings must be strings.")
 
@@ -173,7 +175,7 @@ def table(
         raise TypeError("Each table row must be a sequence of cells.")
     body = tuple(tuple(row) for row in row_values)
     if not body:
-        raise ValueError("A table requires at least one row.")
+        raise ValueError("A table requires at least 1 row.")
     if any(len(row) != len(headings) for row in body):
         raise ValueError("Every table row must match the number of columns.")
     for row in body:
@@ -214,9 +216,7 @@ def table(
     swatch_label_size = max(text_size - _SWATCH_LABEL_SIZE_OFFSET, 1.0)
 
     row_units = tuple(
-        _SWATCH_ROW_UNITS
-        if any(isinstance(cell, TableSwatch) for cell in row)
-        else 1.0
+        _SWATCH_ROW_UNITS if any(isinstance(cell, TableSwatch) for cell in row) else 1.0
         for row in body
     )
     title_units = 1.1 if title is not None else 0.0
@@ -232,7 +232,7 @@ def table(
     for fraction in fractions:
         x_edges.append(x_edges[-1] + width * fraction)
     padding = width * inset
-    text_defaults = {
+    text_defaults: dict[str, Any] = {
         "transform": ax.transAxes,
         "ha": "left",
         "va": "top",
@@ -241,15 +241,15 @@ def table(
         "fontsize": text_size,
         "fontfamily": TECHNICAL_FONT,
     }
-    heading_defaults = text_defaults | {
+    heading_defaults: dict[str, Any] = text_defaults | {
         "fontfamily": GOTHIC_FONT,
         "fontweight": "bold",
         "path_effects": [path_effects.withStroke(linewidth=0.2, foreground=color)],
     }
-    section_defaults = heading_defaults | {
+    section_defaults: dict[str, Any] = heading_defaults | {
         "fontsize": text_size + _SECTION_SIZE_OFFSET,
     }
-    name_cell_defaults = text_defaults | {
+    name_cell_defaults: dict[str, Any] = text_defaults | {
         "fontweight": "medium",
         "path_effects": [path_effects.withStroke(linewidth=0.08, foreground=color)],
     }
@@ -300,7 +300,7 @@ def table(
                     swatch_height,
                     transform=offset_copy(
                         ax.transAxes,
-                        fig=ax.figure,
+                        fig=ax.get_figure(root=True),
                         y=1,
                         units="points",
                     ),
@@ -311,12 +311,15 @@ def table(
                 )
                 ax.add_patch(swatch)
                 artists.append(swatch)
+                swatch_label_defaults: dict[str, Any] = text_defaults | {
+                    "fontsize": swatch_label_size
+                }
                 artists.append(
                     ax.text(
                         x,
                         cursor - unit * _SWATCH_LABEL_OFFSET,
                         label,
-                        **(text_defaults | {"fontsize": swatch_label_size}),
+                        **swatch_label_defaults,
                     )
                 )
             else:

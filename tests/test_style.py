@@ -76,7 +76,7 @@ def test_use_rejects_unknown_accent_without_applying_style():
     with mpl.rc_context():
         before = mpl.rcParams["figure.facecolor"]
         with pytest.raises(ValueError):
-            lab74.use("unknown")
+            lab74.use("unknown")  # ty: ignore[invalid-argument-type]
         assert mpl.rcParams["figure.facecolor"] == before
 
 
@@ -119,7 +119,7 @@ def test_use_rejects_unknown_face_without_applying_style():
     with mpl.rc_context():
         before = mpl.rcParams["figure.facecolor"]
         with pytest.raises(ValueError, match="font face"):
-            lab74.use(face="roman")
+            lab74.use(face="roman")  # ty: ignore[invalid-argument-type]
         assert mpl.rcParams["figure.facecolor"] == before
 
 

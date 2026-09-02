@@ -25,8 +25,6 @@ def test_bar_sequences_define_accented_and_monochrome_variants():
     assert accented[0] == ("accent", "")
     assert monochrome[:2] == (("paper", ""), ("paper", "///"))
     assert monochrome[2] == ("ink", "")
-    assert lab74.sequences.GROUPED_BAR_WITH_ACCENT is accented
-    assert lab74.sequences.GROUPED_BAR_WITHOUT_ACCENT is monochrome
 
 
 def test_sequence_resolvers_apply_or_omit_the_accent():

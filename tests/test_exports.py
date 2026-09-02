@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Literal, get_args, get_origin, get_type_hints
+from typing import Literal, TypeAliasType, get_args, get_origin, get_type_hints
 
 import matplotlib.pyplot as plt
 import pytest
@@ -8,6 +8,8 @@ import lab74
 
 
 def _literal_choices(annotation: object) -> set[str]:
+    if isinstance(annotation, TypeAliasType):
+        annotation = annotation.__value__
     if get_origin(annotation) is Literal:
         return {value for value in get_args(annotation) if isinstance(value, str)}
     return set().union(*(_literal_choices(arg) for arg in get_args(annotation)))
