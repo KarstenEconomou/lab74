@@ -9,23 +9,33 @@ import matplotlib.style as mpl_style
 from . import sequences
 from ._fonts import GOTHIC_FONT, TECHNICAL_FONT
 from .annotations import (
+    AnnotationFace,
     DirectLabelStyle,
     LabelLocation,
+    RegionAxis,
     direct_label,
     leader,
     legend,
+    marked_point,
     overflow_label,
+    panel_labels,
     plate_label,
+    region_labels,
     source_note,
+    title,
+    _configure_annotation_style,
 )
 from .layout import (
     AxesInput,
     FrameStyle,
+    GridStyle,
+    GridWhich,
     MultipanelMode,
     TickAxis,
     TickStyle,
     format_frame,
     format_graticule,
+    format_grid,
     format_multipanel,
     format_ticks,
 )
@@ -50,7 +60,7 @@ from .primitives import (
     stipple,
     technical_contour,
 )
-from .sequences import line_cycle
+from .sequences import LineSeriesMode, line_cycle
 from .tables import TableSwatch, header, table
 
 STYLE_PATH: Final = Path(__file__).with_name("lab74.mplstyle")
@@ -61,13 +71,23 @@ def use(
     accent: AccentName | None = "instrument",
     *,
     face: FontFace = "gothic",
+    annotation_size_offset: float = 0,
+    annotation_face: AnnotationFace | None = None,
+    line_series: LineSeriesMode = "ink",
 ) -> None:
-    """Apply a named accent (or none) and a ``mono`` or ``gothic`` face."""
+    """Apply the style, including optional annotation size and face overrides."""
     if face not in ("mono", "gothic"):
         raise ValueError("The font face must be 'mono' or 'gothic'.")
+    if annotation_face not in (None, "mono", "gothic"):
+        raise ValueError("The annotation face must be 'mono', 'gothic', or None.")
+    if line_series not in ("ink", "grayscale"):
+        raise ValueError("The line-series mode must be 'ink' or 'grayscale'.")
     color = None if accent is None else get_accent(accent)
     mpl_style.use(STYLE_PATH)
-    mpl.rcParams["axes.prop_cycle"] = line_cycle(color)
+    _configure_annotation_style(
+        size_offset=annotation_size_offset, face=annotation_face
+    )
+    mpl.rcParams["axes.prop_cycle"] = line_cycle(color, mode=line_series)
     font = GOTHIC_FONT if face == "gothic" else TECHNICAL_FONT
     mpl.rcParams["font.family"] = [font]
     mpl.rcParams["mathtext.rm"] = font
@@ -84,14 +104,19 @@ __all__ = [
     "RULE",
     "STYLE_PATH",
     "AccentName",
+    "AnnotationFace",
     "AxesInput",
     "BarOrientation",
     "ContourLabelFormat",
     "DirectLabelStyle",
     "FontFace",
     "FrameStyle",
+    "GridStyle",
+    "GridWhich",
     "LabelLocation",
+    "LineSeriesMode",
     "MultipanelMode",
+    "RegionAxis",
     "TickAxis",
     "TickStyle",
     "TableSwatch",
@@ -100,6 +125,7 @@ __all__ = [
     "errorbar",
     "format_frame",
     "format_graticule",
+    "format_grid",
     "format_multipanel",
     "format_ticks",
     "get_accent",
@@ -108,8 +134,11 @@ __all__ = [
     "map_linework",
     "leader",
     "legend",
+    "marked_point",
     "overflow_label",
+    "panel_labels",
     "plate_label",
+    "region_labels",
     "stipple",
     "table",
     "source_note",
@@ -117,5 +146,6 @@ __all__ = [
     "separated_bar",
     "stairs",
     "technical_contour",
+    "title",
     "use",
 ]

@@ -11,6 +11,7 @@ from .palette import INK, MONOCHROME_LINE_COLORS, PAPER
 
 type ColorRole = Literal["accent", "ink", "paper"]
 type LineSeries = tuple[str, Any, str]
+type LineSeriesMode = Literal["ink", "grayscale"]
 type BarSeries = tuple[ColorRole, str]
 
 LINE_WITH_ACCENT: Final[tuple[LineSeries, ...]] = (
@@ -22,13 +23,20 @@ LINE_WITH_ACCENT: Final[tuple[LineSeries, ...]] = (
     ("ink", ":", "D"),
 )
 
-LINE_WITHOUT_ACCENT: Final[tuple[LineSeries, ...]] = (
+LINE_INK: Final[tuple[LineSeries, ...]] = (
+    ("ink", "-", "o"),
+    ("ink", "--", "s"),
+    ("ink", "-.", "^"),
+    ("ink", ":", "x"),
+    ("ink", (0, (7, 2)), "+"),
+    ("ink", (0, (5, 2, 1, 2, 1, 2)), "D"),
+)
+
+LINE_GRAYSCALE: Final[tuple[LineSeries, ...]] = (
     (MONOCHROME_LINE_COLORS[0], "-", "o"),
     (MONOCHROME_LINE_COLORS[1], "-", "s"),
-    (MONOCHROME_LINE_COLORS[2], "--", "^"),
-    (MONOCHROME_LINE_COLORS[3], "-.", "x"),
-    (MONOCHROME_LINE_COLORS[0], (0, (5, 2, 1, 2)), "+"),
-    (MONOCHROME_LINE_COLORS[1], ":", "D"),
+    (MONOCHROME_LINE_COLORS[2], "-", "^"),
+    (MONOCHROME_LINE_COLORS[3], "-", "D"),
 )
 
 BAR_WITH_ACCENT: Final[tuple[BarSeries, ...]] = (
@@ -63,9 +71,16 @@ def _resolve_color(role: str, accent: ColorType | None) -> ColorType:
     return role
 
 
-def line_cycle(accent: ColorType | None) -> Cycler:
-    """Return the line cycle for an accented or monochrome figure."""
-    sequence = LINE_WITH_ACCENT if accent is not None else LINE_WITHOUT_ACCENT
+def line_cycle(accent: ColorType | None, *, mode: LineSeriesMode = "ink") -> Cycler:
+    """Return an accented, all-ink, or grayscale line cycle."""
+    if mode not in ("ink", "grayscale"):
+        raise ValueError("The line-series mode must be 'ink' or 'grayscale'.")
+    if accent is not None:
+        sequence = LINE_WITH_ACCENT
+    elif mode == "ink":
+        sequence = LINE_INK
+    else:
+        sequence = LINE_GRAYSCALE
     return (
         cycler(color=[_resolve_color(color, accent) for color, _, _ in sequence])
         + cycler(linestyle=[linestyle for _, linestyle, _ in sequence])
@@ -86,11 +101,13 @@ __all__ = [
     "BAR_WITHOUT_ACCENT",
     "BAR_WITH_ACCENT",
     "CONTOUR_HATCHES",
-    "LINE_WITHOUT_ACCENT",
+    "LINE_GRAYSCALE",
+    "LINE_INK",
     "LINE_WITH_ACCENT",
     "BarSeries",
     "ColorRole",
     "LineSeries",
+    "LineSeriesMode",
     "bar_styles",
     "line_cycle",
 ]

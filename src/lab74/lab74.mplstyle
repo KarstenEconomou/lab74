@@ -83,7 +83,7 @@ legend.framealpha: 1.0
 legend.borderpad: 0.25
 legend.borderaxespad: 1.0
 legend.labelspacing: 0.25
-legend.handlelength: 1.0
+legend.handlelength: 2.0
 legend.handleheight: 1.0
 legend.handletextpad: 0.3
 legend.columnspacing: 0.8

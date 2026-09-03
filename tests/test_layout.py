@@ -125,6 +125,66 @@ def test_format_graticule_can_format_perimeter_without_lines():
     assert [tick.get_text() for tick in ax.get_yticklabels()] == ["30°", "40°"]
 
 
+def test_format_grid_rules_beneath_the_data_in_the_named_style():
+    fig, (rule_ax, ink_ax) = plt.subplots(1, 2)
+
+    panels = lab74.format_grid(rule_ax)
+    lab74.format_grid(ink_ax, style="ink")
+    fig.canvas.draw()
+
+    assert panels == (rule_ax,)
+    for ax in (rule_ax, ink_ax):
+        assert ax.get_axisbelow()
+        assert ax.xaxis.get_gridlines()[0].get_visible()
+        assert ax.yaxis.get_gridlines()[0].get_visible()
+    assert rule_ax.xaxis.get_gridlines()[0].get_color() == lab74.RULE
+    assert rule_ax.xaxis.get_gridlines()[0].get_linewidth() == pytest.approx(0.3)
+    assert ink_ax.xaxis.get_gridlines()[0].get_color() == lab74.INK
+    assert ink_ax.xaxis.get_gridlines()[0].get_linewidth() == pytest.approx(0.4)
+
+
+def test_format_grid_can_target_one_axis_and_the_minor_lines():
+    fig, ax = plt.subplots()
+    ax.minorticks_on()
+
+    lab74.format_grid(ax, style="ink", axis="y", which="minor")
+    fig.canvas.draw()
+
+    assert not any(line.get_visible() for line in ax.xaxis.get_gridlines())
+    assert not any(line.get_visible() for line in ax.yaxis.get_gridlines())
+    assert ax.yaxis.get_minor_ticks()[0].gridline.get_visible()
+    assert not ax.xaxis.get_minor_ticks()[0].gridline.get_visible()
+
+
+def test_format_grid_rejects_unknown_style_axis_and_lines():
+    _, ax = plt.subplots()
+
+    with pytest.raises(ValueError, match="unknown grid style"):
+        lab74.format_grid(ax, style="engraved")  # ty: ignore[invalid-argument-type]
+    with pytest.raises(ValueError, match="grid axis"):
+        lab74.format_grid(ax, axis="radial")  # ty: ignore[invalid-argument-type]
+    with pytest.raises(ValueError, match="grid lines"):
+        lab74.format_grid(ax, which="every")  # ty: ignore[invalid-argument-type]
+
+
+def test_format_multipanel_forwards_the_grid_style():
+    fig, axes = plt.subplots(1, 2)
+
+    lab74.format_multipanel(axes, grid="ink")
+    fig.canvas.draw()
+
+    for ax in axes:
+        assert ax.get_axisbelow()
+        assert ax.xaxis.get_gridlines()[0].get_color() == lab74.INK
+
+    plain_fig, plain_axes = plt.subplots(1, 2)
+    lab74.format_multipanel(plain_axes)
+    plain_fig.canvas.draw()
+    assert not any(
+        line.get_visible() for ax in plain_axes for line in ax.xaxis.get_gridlines()
+    )
+
+
 def test_format_multipanel_defaults_to_joined_framed_panels():
     fig, axes = plt.subplots(2, 2)
 

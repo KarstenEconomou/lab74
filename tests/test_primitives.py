@@ -6,6 +6,7 @@ from matplotlib.collections import PathCollection, PolyCollection
 from matplotlib.contour import QuadContourSet
 from matplotlib.container import BarContainer, ErrorbarContainer
 from matplotlib.legend import Legend
+from matplotlib.lines import Line2D
 from matplotlib.path import Path
 from matplotlib.patches import StepPatch
 from matplotlib.ticker import NullLocator
@@ -84,6 +85,20 @@ def test_legend_title_and_entries_are_left_aligned():
     assert legend.get_alignment() == "left"
 
 
+def test_legends_and_annotations_can_have_paper_backgrounds():
+    _, ax = plt.subplots()
+    ax.plot([0, 1], [0, 1], label="SERIES")
+
+    legend = lab74.legend(ax, background=True)
+    annotation = lab74.direct_label(ax, 0.5, 0.5, "MIDPOINT", background=True)
+
+    assert legend.get_frame_on()
+    assert legend.get_frame().get_facecolor() == mpl.colors.to_rgba(lab74.PAPER)
+    patch = annotation.get_bbox_patch()
+    assert patch is not None
+    assert patch.get_facecolor() == mpl.colors.to_rgba(lab74.PAPER)
+
+
 @pytest.mark.parametrize(
     ("frame_style", "loc", "axes_anchor", "legend_corner", "offset"),
     [
@@ -107,6 +122,61 @@ def test_legend_offsets_follow_visible_frame_edges(
     actual = np.array([getattr(bounds, coordinate) for coordinate in legend_corner])
     expected = ax.transAxes.transform(axes_anchor) + np.array(offset) * fig.dpi / 72
     np.testing.assert_allclose(actual, expected)
+
+
+def test_paper_backed_legend_is_inset_two_more_points():
+    fig, ax = plt.subplots()
+    ax.plot([0, 1], [0, 1], label="SERIES")
+
+    legend = lab74.legend(ax, loc="upper right", background=True)
+    fig.canvas.draw()
+
+    bounds = legend.get_window_extent(fig.canvas.get_renderer())  # ty: ignore[unresolved-attribute]
+    actual = np.array([bounds.x1, bounds.y1])
+    expected = ax.transAxes.transform((1, 1)) + np.array([-8, -6]) * fig.dpi / 72
+    np.testing.assert_allclose(actual, expected)
+
+
+def test_legend_offset_moves_from_automatic_position_in_points():
+    fig, ax = plt.subplots()
+    ax.plot([0, 1], [0, 1], label="SERIES")
+
+    legend = lab74.legend(ax, loc="upper left", offset=(3, -5))
+    fig.canvas.draw()
+
+    bounds = legend.get_window_extent(fig.canvas.get_renderer())  # ty: ignore[unresolved-attribute]
+    actual = np.array([bounds.x0, bounds.y1])
+    expected = ax.transAxes.transform((0, 1)) + np.array([9, -9]) * fig.dpi / 72
+    np.testing.assert_allclose(actual, expected)
+
+
+def test_legend_offset_also_moves_the_default_location():
+    fig, ax = plt.subplots()
+    ax.plot([0, 1], [0, 1], label="SERIES")
+
+    baseline = lab74.legend(ax)
+    fig.canvas.draw()
+    before = baseline.get_window_extent(fig.canvas.get_renderer())  # ty: ignore[unresolved-attribute]
+    baseline.remove()
+
+    shifted = lab74.legend(ax, offset=(2, -3))
+    fig.canvas.draw()
+    after = shifted.get_window_extent(fig.canvas.get_renderer())  # ty: ignore[unresolved-attribute]
+
+    assert after.x0 - before.x0 == pytest.approx(2 * fig.dpi / 72)
+    assert after.y0 - before.y0 == pytest.approx(-3 * fig.dpi / 72)
+
+
+def test_legend_preserves_dash_patterns_in_longer_handles():
+    _, ax = plt.subplots()
+    ax.plot([0, 1], [0, 1], linestyle="--", label="DASHED")
+    ax.plot([0, 1], [1, 0], linestyle="-.", label="DASH-DOT")
+
+    legend = lab74.legend(ax)
+
+    handles = [handle for handle in legend.legend_handles if isinstance(handle, Line2D)]
+    assert [handle.get_linestyle() for handle in handles] == ["--", "-."]
+    assert legend.handlelength == pytest.approx(2)
 
 
 def test_source_note_uses_a_fixed_point_offset_and_prefix():
@@ -339,7 +409,7 @@ def test_errorbar_uses_open_circle_defaults():
     assert isinstance(container, ErrorbarContainer)
     line = container.lines[0]
     assert line.get_linestyle() == "-"
-    assert line.get_linewidth() == pytest.approx(0.55)
+    assert line.get_linewidth() == pytest.approx(mpl.rcParams["xtick.major.width"])
     assert line.get_marker() == "o"
     assert line.get_markersize() == pytest.approx(3)
     assert line.get_markerfacecolor() == lab74.PAPER

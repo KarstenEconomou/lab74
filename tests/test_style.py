@@ -39,7 +39,9 @@ def test_use_applies_required_rcparams():
         assert mpl.rcParams["axes.linewidth"] == pytest.approx(0.6)
         assert mpl.rcParams["axes.labelsize"] == pytest.approx(8.5)
         assert mpl.rcParams["axes.labelpad"] == pytest.approx(5)
-        assert mpl.rcParams["lines.linewidth"] == pytest.approx(0.55)
+        assert mpl.rcParams["lines.linewidth"] == pytest.approx(
+            mpl.rcParams["xtick.major.width"]
+        )
         assert mpl.rcParams["lines.markersize"] == pytest.approx(3)
         assert mpl.rcParams["lines.markeredgewidth"] == pytest.approx(0.55)
         assert mpl.rcParams["lines.markerfacecolor"] == lab74.PAPER
@@ -59,7 +61,7 @@ def test_use_applies_required_rcparams():
         assert mpl.rcParams["xtick.minor.visible"] is True
         assert mpl.rcParams["axes.grid"] is False
         assert mpl.rcParams["legend.fontsize"] == pytest.approx(7.5)
-        assert mpl.rcParams["legend.handlelength"] == pytest.approx(1)
+        assert mpl.rcParams["legend.handlelength"] == pytest.approx(2)
         assert mpl.rcParams["legend.handleheight"] == pytest.approx(1)
         assert mpl.rcParams["legend.handletextpad"] == pytest.approx(0.3)
         assert mpl.rcParams["legend.borderaxespad"] == pytest.approx(1.0)
@@ -84,10 +86,37 @@ def test_use_without_accent_produces_monochrome_cycle():
     with mpl.rc_context():
         lab74.use(accent=None)
         cycle = mpl.rcParams["axes.prop_cycle"].by_key()
-        assert cycle["color"] == [
-            *lab74.MONOCHROME_LINE_COLORS,
-            *lab74.MONOCHROME_LINE_COLORS[:2],
-        ]
+        assert cycle["color"] == [lab74.INK] * 6
+
+
+def test_use_can_select_a_solid_grayscale_line_series():
+    with mpl.rc_context():
+        lab74.use(accent=None, line_series="grayscale")
+        cycle = mpl.rcParams["axes.prop_cycle"].by_key()
+
+        assert cycle["color"] == list(lab74.MONOCHROME_LINE_COLORS)
+        assert cycle["linestyle"] == ["-"] * 4
+
+
+def test_use_can_uniformly_size_and_face_legends_and_annotations():
+    with mpl.rc_context():
+        try:
+            lab74.use(annotation_size_offset=-2, annotation_face="gothic")
+            fig, ax = plt.subplots()
+            ax.plot([0, 1], [0, 1], label="SERIES")
+
+            annotation = lab74.direct_label(ax, 0.5, 0.5, "POINT")
+            panel = lab74.plate_label(ax, "(a)", face="mono")
+            legend = lab74.legend(ax)
+
+            assert annotation.get_fontsize() == pytest.approx(5.5)
+            assert annotation.get_fontfamily() == ["IBM Plex Sans Condensed"]
+            assert legend.get_texts()[0].get_fontsize() == pytest.approx(5.5)
+            assert legend.get_texts()[0].get_fontfamily() == ["IBM Plex Sans Condensed"]
+            assert panel.get_fontsize() == pytest.approx(5.5)
+            assert panel.get_fontfamily() == ["IBM Plex Mono"]
+        finally:
+            lab74.use()
 
 
 @pytest.mark.parametrize(

@@ -11,13 +11,20 @@ from matplotlib.lines import Line2D
 from matplotlib.ticker import FixedLocator, FuncFormatter
 from matplotlib.typing import ColorType
 
-from .palette import RULE
+from .palette import INK, RULE
 
 type AxesInput = Axes | Iterable[AxesInput]
 type FrameStyle = Literal["open", "closed"]
+type GridStyle = Literal["rule", "ink"]
+type GridWhich = Literal["major", "minor", "both"]
 type MultipanelMode = Literal["framed", "open"]
 type TickAxis = Literal["both", "x", "y"]
 type TickStyle = Literal["default", "cross"]
+
+
+class _GridValues(TypedDict):
+    color: ColorType
+    linewidth: float
 
 
 class _MultipanelValues(TypedDict):
@@ -32,6 +39,11 @@ class _TickValues(TypedDict):
     minor_length: float
     minor_width: float
 
+
+_GRID_STYLES: dict[GridStyle, _GridValues] = {
+    "rule": {"color": RULE, "linewidth": 0.3},
+    "ink": {"color": INK, "linewidth": 0.4},
+}
 
 _MULTIPANEL_MODES: dict[MultipanelMode, _MultipanelValues] = {
     "framed": {"hspace": 0.0, "wspace": 0.0},
@@ -152,6 +164,43 @@ def format_frame(
     return panels
 
 
+def format_grid(
+    axes: AxesInput,
+    *,
+    style: GridStyle = "rule",
+    axis: TickAxis = "both",
+    which: GridWhich = "major",
+) -> tuple[Axes, ...]:
+    """Rule a ``rule`` or ``ink`` grid beneath the data of one or more axes."""
+    if style not in _GRID_STYLES:
+        choices = ", ".join(_GRID_STYLES)
+        raise ValueError(
+            f"The value is an unknown grid style: {style!r}. "
+            f"Use one of these styles: {choices}."
+        )
+    if axis not in ("both", "x", "y"):
+        raise ValueError("The grid axis must be 'both', 'x', or 'y'.")
+    if which not in ("major", "minor", "both"):
+        raise ValueError("The grid lines must be 'major', 'minor', or 'both'.")
+
+    panels = _axes_tuple(axes)
+    if not panels:
+        raise ValueError("format_grid requires at least 1 Axes object.")
+
+    values = _GRID_STYLES[style]
+    for ax in panels:
+        ax.set_axisbelow(True)
+        ax.grid(
+            visible=True,
+            which=which,
+            axis=axis,
+            color=values["color"],
+            linewidth=values["linewidth"],
+            linestyle="-",
+        )
+    return panels
+
+
 def format_graticule(
     ax: Axes,
     longitudes: Iterable[float],
@@ -209,10 +258,11 @@ def format_multipanel(
     *,
     mode: MultipanelMode = "framed",
     tick_style: TickStyle = "default",
+    grid: GridStyle | None = None,
     hspace: float | None = None,
     wspace: float | None = None,
 ) -> tuple[Axes, ...]:
-    """Apply a ``framed`` or ``open`` layout and a named tick style."""
+    """Apply a ``framed`` or ``open`` layout, a tick style, and an optional grid."""
     if mode not in _MULTIPANEL_MODES:
         choices = ", ".join(_MULTIPANEL_MODES)
         raise ValueError(
@@ -241,17 +291,22 @@ def format_multipanel(
 
     format_frame(panels, style="closed" if mode == "framed" else "open")
     format_ticks(panels, style=tick_style)
+    if grid is not None:
+        format_grid(panels, style=grid)
     return panels
 
 
 __all__ = [
     "AxesInput",
     "FrameStyle",
+    "GridStyle",
+    "GridWhich",
     "MultipanelMode",
     "TickAxis",
     "TickStyle",
     "format_frame",
     "format_graticule",
+    "format_grid",
     "format_multipanel",
     "format_ticks",
 ]
