@@ -3,13 +3,7 @@ __pycache__/
 *.py[cod]
 .pytest_cache/
 .ipynb_checkpoints/
-examples/data/*
-!examples/data/apollo17_hfe/
-!examples/data/apollo17_hfe/*.csv
-!examples/data/apollo17_hfe/README.md
-!examples/data/lunar_soil_composition/
-!examples/data/lunar_soil_composition/*.csv
-!examples/data/lunar_soil_composition/README.md
+examples/data/
 ref/
 dist/
 build/
