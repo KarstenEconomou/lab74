@@ -11,7 +11,7 @@ The style uses fine rules, compact type, direct labels, monochrome textures,
 and one optional accent color. It does not add old-paper,
 film-grain, or other retro effects.
 
-[![Apollo 17 subsurface heat-flow temperatures](examples/output/02_apollo17_hfe.png)](examples/02_apollo17_hfe.ipynb)
+[![Calculated characteristics of an n+-p-p+ silicon solar cell](examples/output/04_silicon_solar_cell.png)](examples/04_silicon_solar_cell.ipynb)
 
 ## Installation
 
@@ -48,7 +48,8 @@ Use these options to change the color or the typeface:
 
 ```python
 lab74.use(accent="aerospace")  # Use a different accent.
-lab74.use(accent=None)  # Use the monochrome line-series palette.
+lab74.use(accent=None, line_series="ink")  # Vary all-ink line styles.
+lab74.use(accent=None, line_series="grayscale")  # Vary solid-line shades.
 lab74.use(accent=None, face="mono")  # Use monospaced text.
 ```
 
@@ -62,10 +63,11 @@ This method uses the default `instrument` accent.
 
 ## Plot tools
 
-`lab74` includes small tools for annotations, error bars, grouped bars, hatched
-regions, contours, maps, tables, ticks, frames, and multipanel layouts. These
-tools return normal Matplotlib artists. Thus, you can change the result with
-the Matplotlib API.
+`lab74` includes small tools for figure titles, annotations, region labels,
+error bars, grouped bars, hatched regions, contours, maps, tables, ticks, grids,
+frames, and multipanel layouts.
+These tools return normal Matplotlib artists.
+Thus, you can change the result with the Matplotlib API.
 
 See [src/lab74/](src/lab74/) for all available tools and their
 docstrings.
@@ -73,10 +75,10 @@ docstrings.
 ## Gallery
 
 Executable notebooks are in the [examples/](examples/). 
-They use scientific data from SILSO, the NASA archives, and the NOAA/NCEP–NCAR
-Reanalysis 1 project. Rendered images are in [`examples/output/`](examples/output/).
 
 [![Apollo 17 orange and gray soil grain-size distributions](examples/output/03_apollo17_soil_grain_size.png)](examples/03_apollo17_soil_grain_size.ipynb)
+
+[![Apollo 17 subsurface heat-flow temperatures](examples/output/02_apollo17_hfe.png)](examples/02_apollo17_hfe.ipynb)
 
 [![Lunar landing-site soil composition by terrain type](examples/output/05_lunar_soil_composition.png)](examples/05_lunar_soil_composition.ipynb)
 
