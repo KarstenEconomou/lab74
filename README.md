@@ -83,9 +83,9 @@ Reanalysis 1 project. Rendered images are in [`examples/output/`](examples/outpu
 ## Fonts
 
 `lab74` bundles IBM Plex Sans Condensed (the `gothic` face) and IBM Plex Mono
-(the `mono` face), each in regular and italic weights, under the [SIL Open
-Font License 1.1](src/lab74/fonts/OFL.txt). If neither font is installed,
-`lab74` falls back to DejaVu Sans and DejaVu Sans Mono.
+(the `mono` face), each in regular, italic, and medium weights, under the
+[SIL Open Font License 1.1](src/lab74/fonts/OFL.txt). If neither font is
+installed, `lab74` falls back to DejaVu Sans and DejaVu Sans Mono.
 
 ## License
 

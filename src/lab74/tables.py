@@ -101,7 +101,7 @@ def header(
     }
     name_defaults: dict[str, Any] = defaults | {
         "fontsize": name_size,
-        "fontweight": "bold",
+        "fontweight": "medium",
         "path_effects": [path_effects.withStroke(linewidth=0.2, foreground=color)],
     }
     return (
@@ -243,7 +243,7 @@ def table(
     }
     heading_defaults: dict[str, Any] = text_defaults | {
         "fontfamily": GOTHIC_FONT,
-        "fontweight": "bold",
+        "fontweight": "medium",
         "path_effects": [path_effects.withStroke(linewidth=0.2, foreground=color)],
     }
     section_defaults: dict[str, Any] = heading_defaults | {
@@ -260,7 +260,7 @@ def table(
         if not isinstance(title, str):
             raise TypeError("The table title must be a string or None.")
         artists.append(ax.text(left + padding, cursor, title, **section_defaults))
-        cursor -= unit * 0.68
+        cursor -= unit * 0.76
         rule = Line2D(
             [left + padding, left + width - padding],
             [cursor, cursor],
@@ -272,7 +272,7 @@ def table(
         )
         ax.add_line(rule)
         artists.append(rule)
-        cursor -= unit * 0.42
+        cursor -= unit * 0.34
 
     for index, heading in enumerate(headings):
         artists.append(

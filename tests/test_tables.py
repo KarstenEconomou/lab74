@@ -29,7 +29,7 @@ def test_header_uses_one_font_size_and_the_shared_horizontal_inset():
     assert labels[0].get_fontsize() == pytest.approx(9.5)
     assert all(label.get_fontsize() == pytest.approx(8.5) for label in labels[1:])
     assert all(label.get_fontfamily() == ["IBM Plex Mono"] for label in labels)
-    assert labels[0].get_fontweight() == "bold"
+    assert labels[0].get_fontweight() == "medium"
     assert all(label.get_fontweight() == "normal" for label in labels[1:])
     actual = np.asarray(
         [label.get_transform().transform(label.get_position()) for label in labels]
@@ -69,7 +69,7 @@ def test_table_draws_sparse_technical_text_and_rule_on_supplied_axes():
         text.get_fontfamily() == ["IBM Plex Sans Condensed"] for text in texts[:3]
     )
     assert all(text.get_fontfamily() == ["IBM Plex Mono"] for text in texts[3:])
-    assert all(text.get_fontweight() == "bold" for text in texts[:3])
+    assert all(text.get_fontweight() == "medium" for text in texts[:3])
     assert texts[0].get_fontsize() == pytest.approx(
         texts[1].get_fontsize() + 1  # ty: ignore[unsupported-operator]
     )

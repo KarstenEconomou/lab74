@@ -9,8 +9,10 @@ _FONT_DIR = Path(__file__).with_name("fonts")
 for _font_path in (
     _FONT_DIR / "IBMPlexSansCondensed-Regular.ttf",
     _FONT_DIR / "IBMPlexSansCondensed-Italic.ttf",
+    _FONT_DIR / "IBMPlexSansCondensed-Medium.ttf",
     _FONT_DIR / "IBMPlexMono-Regular.ttf",
     _FONT_DIR / "IBMPlexMono-Italic.ttf",
+    _FONT_DIR / "IBMPlexMono-Medium.ttf",
 ):
     if _font_path.is_file():
         font_manager.fontManager.addfont(_font_path)
