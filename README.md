@@ -1,6 +1,8 @@
 # lab74
 
-[![Apollo 17 subsurface heat-flow temperatures](examples/output/02_apollo17_hfe.png)](examples/02_apollo17_hfe.ipynb)
+[![PyPI](https://img.shields.io/pypi/v/lab74)](https://pypi.org/project/lab74/)
+[![Python versions](https://img.shields.io/pypi/pyversions/lab74)](https://pypi.org/project/lab74/)
+[![License](https://img.shields.io/pypi/l/lab74)](LICENSE)
 
 `lab74` is a Matplotlib style layer for scientific and institutional 
 figures in the technical print style of ca. 1965–1980.
@@ -8,6 +10,8 @@ figures in the technical print style of ca. 1965–1980.
 The style uses fine rules, compact type, direct labels, monochrome textures, 
 and one optional accent color. It does not add old-paper,
 film-grain, or other retro effects.
+
+[![Apollo 17 subsurface heat-flow temperatures](examples/output/02_apollo17_hfe.png)](examples/02_apollo17_hfe.ipynb)
 
 ## Installation
 
@@ -22,7 +26,7 @@ Requirements:
 * `matplotlib>=3.8`
 * `numpy>=1.26`
 
-## Basic use
+## Use
 
 [![lab74 colour reproduction standard](examples/output/06_palette.png)](examples/06_palette.ipynb)
 
@@ -75,3 +79,7 @@ Reanalysis 1 project. Rendered images are in [`examples/output/`](examples/outpu
 [![Apollo 17 orange and gray soil grain-size distributions](examples/output/03_apollo17_soil_grain_size.png)](examples/03_apollo17_soil_grain_size.ipynb)
 
 [![Lunar landing-site soil composition by terrain type](examples/output/05_lunar_soil_composition.png)](examples/05_lunar_soil_composition.ipynb)
+
+## License
+
+`lab74` is available under the [MIT license](LICENSE).
