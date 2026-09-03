@@ -80,6 +80,13 @@ Reanalysis 1 project. Rendered images are in [`examples/output/`](examples/outpu
 
 [![Lunar landing-site soil composition by terrain type](examples/output/05_lunar_soil_composition.png)](examples/05_lunar_soil_composition.ipynb)
 
+## Fonts
+
+`lab74` bundles IBM Plex Sans Condensed (the `gothic` face) and IBM Plex Mono
+(the `mono` face), each in regular and italic weights, under the [SIL Open
+Font License 1.1](src/lab74/fonts/OFL.txt). If neither font is installed,
+`lab74` falls back to DejaVu Sans and DejaVu Sans Mono.
+
 ## License
 
 `lab74` is available under the [MIT license](LICENSE).
