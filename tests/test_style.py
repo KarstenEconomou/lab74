@@ -3,9 +3,9 @@ import subprocess
 import sys
 
 import matplotlib as mpl
-import matplotlib.font_manager as font_manager
 import matplotlib.pyplot as plt
 import pytest
+from matplotlib import font_manager
 from matplotlib.mathtext import MathTextParser
 
 import lab74
@@ -77,16 +77,19 @@ def test_use_applies_required_rcparams():
 def test_use_rejects_unknown_accent_without_applying_style():
     with mpl.rc_context():
         before = mpl.rcParams["figure.facecolor"]
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="Unknown lab74 accent"):
             lab74.use("unknown")  # ty: ignore[invalid-argument-type]
         assert mpl.rcParams["figure.facecolor"] == before
 
 
-def test_use_without_accent_produces_monochrome_cycle():
+def test_use_is_monochrome_by_default():
     with mpl.rc_context():
+        lab74.use()
+        default = mpl.rcParams["axes.prop_cycle"]
         lab74.use(accent=None)
-        cycle = mpl.rcParams["axes.prop_cycle"].by_key()
-        assert cycle["color"] == [lab74.INK] * 6
+
+        assert default.by_key()["color"] == [lab74.INK] * 6
+        assert default == mpl.rcParams["axes.prop_cycle"]
 
 
 def test_use_can_select_a_solid_grayscale_line_series():
@@ -102,7 +105,7 @@ def test_use_can_uniformly_size_and_face_legends_and_annotations():
     with mpl.rc_context():
         try:
             lab74.use(annotation_size_offset=-2, annotation_face="gothic")
-            fig, ax = plt.subplots()
+            _, ax = plt.subplots()
             ax.plot([0, 1], [0, 1], label="SERIES")
 
             annotation = lab74.direct_label(ax, 0.5, 0.5, "POINT")
@@ -152,9 +155,13 @@ def test_use_rejects_unknown_face_without_applying_style():
         assert mpl.rcParams["figure.facecolor"] == before
 
 
-def test_packaged_stylesheet_is_directly_loadable():
+def test_packaged_stylesheet_matches_the_defaults_of_use():
     assert lab74.STYLE_PATH.is_file()
     with mpl.rc_context():
         plt.style.use(lab74.STYLE_PATH)
+        sheet_cycle = mpl.rcParams["axes.prop_cycle"]
         assert mpl.rcParams["figure.facecolor"] == lab74.PAPER
-        assert mpl.rcParams["axes.prop_cycle"].by_key()["color"][0] == "#CB6015"
+        assert sheet_cycle == lab74.sequences.line_cycle(None, mode="ink")
+
+        lab74.use()
+        assert sheet_cycle == mpl.rcParams["axes.prop_cycle"]

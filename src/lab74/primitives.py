@@ -1,37 +1,41 @@
 """Draw effects that Matplotlib style parameters cannot define."""
 
-from __future__ import annotations
-
 from collections.abc import Callable, Iterable, Mapping, Sequence
 from itertools import pairwise
 from math import isfinite
-from typing import Any, Literal
+from typing import Any, Final, Literal
 
 import matplotlib as mpl
 import numpy as np
 from matplotlib.axes import Axes
 from matplotlib.collections import PathCollection, PolyCollection
-from matplotlib.contour import QuadContourSet
 from matplotlib.container import BarContainer, ErrorbarContainer
+from matplotlib.contour import QuadContourSet
 from matplotlib.lines import Line2D
-from matplotlib.path import Path
 from matplotlib.patches import StepPatch
+from matplotlib.path import Path
 from matplotlib.ticker import NullLocator
 from matplotlib.typing import ColorType
 from numpy.typing import ArrayLike
 
-from .palette import ACCENTS, INK, MONOCHROME_LINE_COLORS, PAPER
+from .palette import INK, MONOCHROME_LINE_COLORS, PAPER
 from .sequences import CONTOUR_HATCHES, bar_styles
 
 type ContourLabelFormat = str | Mapping[float, str] | Callable[[float], str]
 type BarOrientation = Literal["vertical", "horizontal"]
+
+_HAIRLINE_WIDTH: Final = 0.45
+_OUTLINE_WIDTH: Final = 0.5
+_CONTOUR_WIDTH: Final = 0.55
+_ACCENT_CONTOUR_WIDTH: Final = 0.9
+_STIPPLE_ATTEMPT_LIMIT: Final = 100
 
 
 def _active_accent() -> ColorType | None:
     """Return the active accent, or none for a monochrome cycle."""
     colors = mpl.rcParams["axes.prop_cycle"].by_key().get("color", [])
     if not colors:
-        return ACCENTS["instrument"]
+        return None
     is_monochrome = any(
         mpl.colors.same_color(colors[0], color)
         for color in (INK, MONOCHROME_LINE_COLORS[0])
@@ -203,9 +207,9 @@ def errorbar(
         "markersize": mpl.rcParams["lines.markersize"],
         "markerfacecolor": PAPER,
         "markeredgewidth": mpl.rcParams["lines.markeredgewidth"],
-        "elinewidth": 0.45,
+        "elinewidth": _HAIRLINE_WIDTH,
         "capsize": mpl.rcParams["errorbar.capsize"],
-        "capthick": 0.45,
+        "capthick": _HAIRLINE_WIDTH,
     }
     defaults.update(kwargs)
     return ax.errorbar(x, y, yerr=yerr, xerr=xerr, **defaults)
@@ -221,12 +225,12 @@ def band(
     color: ColorType | None = None,
     **kwargs: Any,
 ) -> PolyCollection:
-    """Draw a paper-filled interval in the active accent."""
+    """Draw a paper-filled interval outlined in the active accent or ink."""
     edge = _active_color() if color is None else color
     defaults: dict[str, Any] = {
         "facecolor": PAPER,
         "edgecolor": edge,
-        "linewidth": 0.5,
+        "linewidth": _OUTLINE_WIDTH,
         "hatch": hatch,
     }
     defaults.update(kwargs)
@@ -277,8 +281,8 @@ def stipple(
 ) -> PathCollection:
     """Fill a polygon with dots at an approximate density per square inch.
 
-    Density uses the current data transform. Set the final axes limits
-    before this call.
+    The dot count follows the polygon area on the page, so set the final axes
+    limits and figure size before this call.
     """
     data_vertices = np.asarray(vertices, dtype=float)
     if data_vertices.ndim != 2 or data_vertices.shape[1] != 2 or len(data_vertices) < 3:
@@ -302,7 +306,7 @@ def stipple(
         accepted: list[np.ndarray] = []
         remaining = count
         attempts = 0
-        while remaining and attempts < 100:
+        while remaining and attempts < _STIPPLE_ATTEMPT_LIMIT:
             candidates = rng.uniform(low, high, size=(max(remaining * 3, 64), 2))
             inside = candidates[path.contains_points(candidates)]
             if len(inside):
@@ -311,7 +315,7 @@ def stipple(
                 remaining -= len(take)
             attempts += 1
         if remaining:
-            raise RuntimeError("The function could not sample the stipple polygon.")
+            raise RuntimeError("Sampling the stipple polygon did not converge.")
         points = ax.transData.inverted().transform(np.vstack(accepted))
 
     defaults: dict[str, Any] = {
@@ -334,14 +338,18 @@ def technical_contour(
     *,
     levels: Iterable[float],
     filled: bool = False,
-    accent_levels: Iterable[float] = (),
+    accent_level: float | None = None,
     labels: bool = False,
     label_format: ContourLabelFormat = "%g",
     label_kwargs: Mapping[str, Any] | None = None,
     hatches: Sequence[str] | None = None,
     **kwargs: Any,
 ) -> tuple[QuadContourSet, QuadContourSet | None]:
-    """Draw explicit contour levels and optional hatched regions."""
+    """Draw explicit contour levels and optional hatched regions.
+
+    One level may be drawn in the active accent at a heavier weight, in
+    keeping with the single-accent style.
+    """
     values = list(levels)
     if len(values) < 2:
         raise ValueError("Technical contours require at least 2 explicit levels.")
@@ -349,14 +357,15 @@ def technical_contour(
         raise ValueError("Technical contour levels must be finite.")
     if any(first >= second for first, second in pairwise(values)):
         raise ValueError("Technical contour levels must be in increasing order.")
-    accented = set(accent_levels)
-    if len(accented) > 1:
-        raise ValueError("Technical contours may accent at most 1 level.")
-    if not accented.issubset(values):
+    if accent_level is not None and accent_level not in values:
         raise ValueError("The accented contour level must be present in levels.")
     accent = _active_color()
-    colors = [accent if level in accented else INK for level in values]
-    linewidths = [0.9 if level in accented else 0.55 for level in values]
+    is_accented = [level == accent_level for level in values]
+    colors = [accent if accented else INK for accented in is_accented]
+    linewidths = [
+        _ACCENT_CONTOUR_WIDTH if accented else _CONTOUR_WIDTH
+        for accented in is_accented
+    ]
 
     regions: QuadContourSet | None = None
     if filled:
@@ -398,7 +407,7 @@ def map_linework(
     paths: Iterable[ArrayLike],
     *,
     color: ColorType = INK,
-    linewidth: float = 0.45,
+    linewidth: float = _HAIRLINE_WIDTH,
     **kwargs: Any,
 ) -> tuple[Line2D, ...]:
     """Draw solid, marker-free map paths from coordinate arrays."""

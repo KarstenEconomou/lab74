@@ -1,10 +1,8 @@
 """Format ticks and compact groups of axes."""
 
-from __future__ import annotations
-
 from collections.abc import Iterable
 from math import isfinite
-from typing import Literal, TypedDict
+from typing import Any, Final, Literal, TypedDict
 
 from matplotlib.axes import Axes
 from matplotlib.lines import Line2D
@@ -40,17 +38,17 @@ class _TickValues(TypedDict):
     minor_width: float
 
 
-_GRID_STYLES: dict[GridStyle, _GridValues] = {
+_GRID_STYLES: Final[dict[GridStyle, _GridValues]] = {
     "rule": {"color": RULE, "linewidth": 0.3},
     "ink": {"color": INK, "linewidth": 0.4},
 }
 
-_MULTIPANEL_MODES: dict[MultipanelMode, _MultipanelValues] = {
+_MULTIPANEL_MODES: Final[dict[MultipanelMode, _MultipanelValues]] = {
     "framed": {"hspace": 0.0, "wspace": 0.0},
     "open": {"hspace": 0.06, "wspace": 0.06},
 }
 
-_TICK_STYLES: dict[TickStyle, _TickValues] = {
+_TICK_STYLES: Final[dict[TickStyle, _TickValues]] = {
     "default": {
         "direction": "in",
         "major_length": 5.0,
@@ -108,8 +106,7 @@ def format_ticks(
     if style not in _TICK_STYLES:
         choices = ", ".join(_TICK_STYLES)
         raise ValueError(
-            f"The value is an unknown tick style: {style!r}. "
-            f"Use one of these styles: {choices}."
+            f"Unknown tick style: {style!r}. Use one of these styles: {choices}."
         )
     if axis not in ("both", "x", "y"):
         raise ValueError("The tick axis must be 'both', 'x', or 'y'.")
@@ -175,8 +172,7 @@ def format_grid(
     if style not in _GRID_STYLES:
         choices = ", ".join(_GRID_STYLES)
         raise ValueError(
-            f"The value is an unknown grid style: {style!r}. "
-            f"Use one of these styles: {choices}."
+            f"Unknown grid style: {style!r}. Use one of these styles: {choices}."
         )
     if axis not in ("both", "x", "y"):
         raise ValueError("The grid axis must be 'both', 'x', or 'y'.")
@@ -218,29 +214,22 @@ def format_graticule(
     if not all(isfinite(value) for value in longitude_values + latitude_values):
         raise ValueError("Graticule coordinates must be finite.")
 
-    longitude_lines = tuple(
-        ax.axvline(
-            value,
-            color=color,
-            linewidth=linewidth,
-            linestyle="-",
-            marker="None",
-            zorder=0,
-        )
-        for value in longitude_values
+    line_properties: dict[str, Any] = {
+        "color": color,
+        "linewidth": linewidth,
+        "linestyle": "-",
+        "marker": "None",
+        "zorder": 0,
+    }
+    longitude_lines = (
+        tuple(ax.axvline(value, **line_properties) for value in longitude_values)
         if draw_lines
+        else ()
     )
-    latitude_lines = tuple(
-        ax.axhline(
-            value,
-            color=color,
-            linewidth=linewidth,
-            linestyle="-",
-            marker="None",
-            zorder=0,
-        )
-        for value in latitude_values
+    latitude_lines = (
+        tuple(ax.axhline(value, **line_properties) for value in latitude_values)
         if draw_lines
+        else ()
     )
     degree_label = FuncFormatter(lambda value, _: f"{abs(value):.0f}°")
     ax.xaxis.set_major_locator(FixedLocator(longitude_values))
@@ -266,14 +255,12 @@ def format_multipanel(
     if mode not in _MULTIPANEL_MODES:
         choices = ", ".join(_MULTIPANEL_MODES)
         raise ValueError(
-            f"The value is an unknown multipanel mode: {mode!r}. "
-            f"Use one of these modes: {choices}."
+            f"Unknown multipanel mode: {mode!r}. Use one of these modes: {choices}."
         )
     if tick_style not in _TICK_STYLES:
         choices = ", ".join(_TICK_STYLES)
         raise ValueError(
-            f"The value is an unknown tick style: {tick_style!r}. "
-            f"Use one of these styles: {choices}."
+            f"Unknown tick style: {tick_style!r}. Use one of these styles: {choices}."
         )
 
     panels = _axes_tuple(axes)

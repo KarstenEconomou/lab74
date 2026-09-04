@@ -29,7 +29,7 @@ def test_format_ticks_supports_default_and_cross_styles():
 
 def test_format_ticks_rejects_unknown_style():
     _, ax = plt.subplots()
-    with pytest.raises(ValueError, match="unknown tick style"):
+    with pytest.raises(ValueError, match="Unknown tick style"):
         lab74.format_ticks(ax, style="ornamental")  # ty: ignore[invalid-argument-type]
 
 
@@ -159,7 +159,7 @@ def test_format_grid_can_target_one_axis_and_the_minor_lines():
 def test_format_grid_rejects_unknown_style_axis_and_lines():
     _, ax = plt.subplots()
 
-    with pytest.raises(ValueError, match="unknown grid style"):
+    with pytest.raises(ValueError, match="Unknown grid style"):
         lab74.format_grid(ax, style="engraved")  # ty: ignore[invalid-argument-type]
     with pytest.raises(ValueError, match="grid axis"):
         lab74.format_grid(ax, axis="radial")  # ty: ignore[invalid-argument-type]
@@ -255,7 +255,7 @@ def test_format_multipanel_rejects_axes_from_different_figures():
 def test_format_multipanel_rejects_unknown_mode():
     _, ax = plt.subplots()
 
-    with pytest.raises(ValueError, match="unknown multipanel mode"):
+    with pytest.raises(ValueError, match="Unknown multipanel mode"):
         lab74.format_multipanel(ax, mode="cards")  # ty: ignore[invalid-argument-type]
 
 

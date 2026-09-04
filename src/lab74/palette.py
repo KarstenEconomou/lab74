@@ -48,8 +48,7 @@ def get_accent(name: AccentName) -> str:
     except KeyError as exc:
         choices = ", ".join(ACCENTS)
         raise ValueError(
-            f"The value is an unknown lab74 accent: {name!r}. "
-            f"Use one of these names: {choices}."
+            f"Unknown lab74 accent: {name!r}. Use one of these names: {choices}."
         ) from exc
 
 

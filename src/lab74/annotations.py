@@ -1,12 +1,10 @@
 """Add text and leader lines to scientific figures."""
 
-from __future__ import annotations
-
 from collections.abc import Sequence
 from itertools import pairwise
 from math import isfinite, sqrt
 from string import ascii_lowercase
-from typing import Any, Literal
+from typing import Any, Final, Literal
 
 import matplotlib as mpl
 import matplotlib.patheffects as path_effects
@@ -19,14 +17,19 @@ from matplotlib.text import Annotation, Text
 from matplotlib.transforms import Affine2D, blended_transform_factory, offset_copy
 from matplotlib.typing import ColorType
 
-from ._fonts import GOTHIC_FONT, TECHNICAL_FONT
+from ._fonts import FACES, MONO_FONT, FontFace, font_for, font_size_points
 from .layout import AxesInput, _axes_tuple
 from .palette import INK, PAPER
 
 type LabelLocation = Literal["upper left", "upper right", "lower left", "lower right"]
 type DirectLabelStyle = Literal["emphasized"]
-type AnnotationFace = Literal["mono", "gothic"]
+type AnnotationFace = FontFace
 type RegionAxis = Literal["x", "y"]
+
+_DEFAULT_ANNOTATION_FACE: Final[AnnotationFace] = "mono"
+_EMPHASIS_STROKE: Final = 0.2
+_LEADER_WIDTH: Final = 0.5
+_RULE_WIDTH: Final = 0.65
 
 _ANNOTATION_FACE: AnnotationFace | None = None
 _ANNOTATION_SIZE_OFFSET = 0.0
@@ -52,22 +55,45 @@ _LEGEND_LOCATIONS: dict[str, tuple[tuple[float, float], str, str]] = {
 }
 
 
+def _emphasize(text: str) -> str:
+    """Return uppercase, letter-spaced text for the ``emphasized`` style."""
+    return "   ".join(" ".join(word) for word in text.upper().split())
+
+
+def _validate_label_style(style: DirectLabelStyle | None, noun: str) -> None:
+    """Reject a label style other than ``emphasized`` or none."""
+    if style not in (None, "emphasized"):
+        raise ValueError(f"The {noun} style must be 'emphasized' or None.")
+
+
+def _leader_arrowprops(color: ColorType, *, shrink_a: float = 2) -> dict[str, Any]:
+    """Return the properties of a thin leader line drawn to a data point."""
+    return {
+        "arrowstyle": "-",
+        "color": color,
+        "linewidth": _LEADER_WIDTH,
+        "shrinkA": shrink_a,
+        "shrinkB": 1,
+    }
+
+
 def _configure_annotation_style(
     *, size_offset: float = 0, face: AnnotationFace | None = None
 ) -> None:
     """Set the annotation defaults used after applying the Matplotlib style."""
-    if face not in (None, "mono", "gothic"):
-        raise ValueError("The annotation face must be 'mono', 'gothic', or None.")
+    if face is not None and face not in FACES:
+        choices = ", ".join(repr(name) for name in FACES)
+        raise ValueError(f"The annotation face must be {choices}, or None.")
     resolved_offset = float(size_offset)
     if not isfinite(resolved_offset):
         raise ValueError("The annotation size offset must be finite.")
-    legend_size = font_manager.FontProperties(
-        size=mpl.rcParams["legend.fontsize"]
-    ).get_size_in_points()
+    legend_size = font_size_points(mpl.rcParams["legend.fontsize"])
     if legend_size + resolved_offset <= 0:
         raise ValueError("The annotation size offset produces a nonpositive size.")
 
-    global _ANNOTATION_FACE, _ANNOTATION_SIZE_OFFSET
+    # The annotation defaults are process-wide state, like the rcParams that
+    # use() sets alongside them.
+    global _ANNOTATION_FACE, _ANNOTATION_SIZE_OFFSET  # noqa: PLW0603
     _ANNOTATION_FACE = face
     _ANNOTATION_SIZE_OFFSET = resolved_offset
     mpl.rcParams["legend.fontsize"] = legend_size + resolved_offset
@@ -81,14 +107,12 @@ def _technical_text(
     color: ColorType, face: AnnotationFace | None = None
 ) -> dict[str, Any]:
     """Return properties shared by technical annotations."""
-    base_size = font_manager.FontProperties(
-        size=mpl.rcParams["xtick.labelsize"]
-    ).get_size_in_points()
-    resolved_face = _resolved_annotation_face(face)
+    base_size = font_size_points(mpl.rcParams["xtick.labelsize"])
+    resolved_face = _resolved_annotation_face(face) or _DEFAULT_ANNOTATION_FACE
     return {
         "color": color,
         "fontsize": base_size + _ANNOTATION_SIZE_OFFSET,
-        "fontfamily": GOTHIC_FONT if resolved_face == "gothic" else TECHNICAL_FONT,
+        "fontfamily": font_for(resolved_face),
     }
 
 
@@ -126,46 +150,34 @@ def title(
         raise ValueError("The title line offset must be positive and finite.")
     try:
         mpl.colors.to_rgba(color)
-        resolved_size = font_manager.FontProperties(
-            size=mpl.rcParams["axes.titlesize"] if fontsize is None else fontsize
-        ).get_size_in_points()
-    except (TypeError, ValueError) as exc:
-        raise ValueError("The title color and font size must be valid.") from exc
-    if not isfinite(resolved_size) or resolved_size <= 0:
-        raise ValueError("The title font size must be positive and finite.")
+    except ValueError as exc:
+        raise ValueError("The title color must be valid.") from exc
+    resolved_size = font_size_points(
+        mpl.rcParams["axes.titlesize"] if fontsize is None else fontsize
+    )
 
     second_line = offset_copy(
         figure.transFigure, fig=figure, y=-line_offset, units="points"
     )
     defaults: dict[str, Any] = {
+        "ha": "center",
         "va": "top",
         "clip_on": False,
         "color": color,
         "fontsize": resolved_size,
-        "fontfamily": TECHNICAL_FONT,
+        "fontfamily": MONO_FONT,
+    }
+    title_defaults: dict[str, Any] = defaults | {
+        "fontweight": "medium",
+        "path_effects": [
+            path_effects.withStroke(linewidth=_EMPHASIS_STROKE, foreground=color)
+        ],
     }
     artists = [
-        figure.text(
-            0.5,
-            y,
-            text,
-            transform=figure.transFigure,
-            ha="center",
-            va="top",
-            clip_on=False,
-            color=color,
-            fontsize=resolved_size,
-            fontfamily=TECHNICAL_FONT,
-            fontweight="medium",
-            path_effects=[path_effects.withStroke(linewidth=0.2, foreground=color)],
-        )
+        figure.text(0.5, y, text, transform=figure.transFigure, **title_defaults)
     ]
     if subtitle is not None:
-        artists.append(
-            figure.text(
-                0.5, y, subtitle, transform=second_line, ha="center", **defaults
-            )
-        )
+        artists.append(figure.text(0.5, y, subtitle, transform=second_line, **defaults))
     return tuple(artists)
 
 
@@ -184,13 +196,12 @@ def plate_label(
     if loc not in _LOCATIONS:
         choices = ", ".join(_LOCATIONS)
         raise ValueError(
-            f"The value is an unknown plate-label location: {loc!r}. "
+            f"Unknown plate-label location: {loc!r}. "
             f"Use one of these locations: {choices}."
         )
-    if style not in (None, "emphasized"):
-        raise ValueError("The plate-label style must be 'emphasized' or None.")
+    _validate_label_style(style, "plate-label")
     if style == "emphasized":
-        text = "   ".join(" ".join(word) for word in text.upper().split())
+        text = _emphasize(text)
     xy, ha, va = _LOCATIONS[loc]
     inset_transform = offset_copy(
         ax.transAxes,
@@ -268,10 +279,8 @@ def legend(
     defaults: dict[str, Any] = {"alignment": "left"}
     resolved_face = _resolved_annotation_face(face)
     if resolved_face is not None:
-        font = GOTHIC_FONT if resolved_face == "gothic" else TECHNICAL_FONT
-        size = font_manager.FontProperties(
-            size=mpl.rcParams["legend.fontsize"]
-        ).get_size_in_points()
+        font = font_for(resolved_face)
+        size = font_size_points(mpl.rcParams["legend.fontsize"])
         defaults.update(
             {
                 "prop": font_manager.FontProperties(family=font, size=size),
@@ -409,13 +418,7 @@ def leader(
         | {
             "ha": "left",
             "va": "center",
-            "arrowprops": {
-                "arrowstyle": arrowstyle,
-                "color": color,
-                "linewidth": 0.5,
-                "shrinkA": 2,
-                "shrinkB": 1,
-            },
+            "arrowprops": _leader_arrowprops(color) | {"arrowstyle": arrowstyle},
         }
     )
     defaults.update(kwargs)
@@ -436,10 +439,9 @@ def direct_label(
     **kwargs: Any,
 ) -> Annotation:
     """Add a technical label with an optional ``emphasized`` style."""
-    if style not in (None, "emphasized"):
-        raise ValueError("The direct-label style must be 'emphasized' or None.")
+    _validate_label_style(style, "direct-label")
     if style == "emphasized":
-        text = "   ".join(" ".join(word) for word in text.upper().split())
+        text = _emphasize(text)
 
     defaults: dict[str, Any] = (
         _technical_text(color, face)
@@ -469,14 +471,15 @@ def marked_point(
     style: DirectLabelStyle | None = None,
     background: bool = False,
     face: AnnotationFace | None = None,
-    leader: bool = False,
+    leader_line: bool = False,
     color: ColorType = INK,
     **kwargs: Any,
 ) -> tuple[Line2D, Annotation]:
     """Mark one labelled point without adding a plotted series.
 
     The marker is excluded from the legend, so operating points can be
-    identified on a curve that already carries its own label.
+    identified on a curve that already carries its own label. Set
+    ``leader_line`` to join the label to the marker with a thin rule.
     """
     if not isfinite(x) or not isfinite(y):
         raise ValueError("A marked point must have finite coordinates.")
@@ -492,14 +495,8 @@ def marked_point(
         clip_on=False,
     )
     label_defaults: dict[str, Any] = {}
-    if leader:
-        label_defaults["arrowprops"] = {
-            "arrowstyle": "-",
-            "color": color,
-            "linewidth": 0.5,
-            "shrinkA": 1,
-            "shrinkB": 1,
-        }
+    if leader_line:
+        label_defaults["arrowprops"] = _leader_arrowprops(color, shrink_a=1)
     label_defaults.update(kwargs)
     label = direct_label(
         ax,
@@ -546,8 +543,7 @@ def region_labels(
     """
     if axis not in ("x", "y"):
         raise ValueError("The region axis must be 'x' or 'y'.")
-    if style not in (None, "emphasized"):
-        raise ValueError("The region-label style must be 'emphasized' or None.")
+    _validate_label_style(style, "region-label")
     if not isfinite(position) or not 0 <= position <= 1:
         raise ValueError("The region-label position must be between 0 and 1.")
     if len(leader_offset) != 2 or not all(
@@ -588,7 +584,7 @@ def region_labels(
             *(across if axis == "x" else across[::-1]),
             transform=transform,
             color=color,
-            linewidth=0.65,
+            linewidth=_RULE_WIDTH,
             linestyle=(0, (3, 2)),
             marker="",
             clip_on=False,
@@ -611,22 +607,16 @@ def region_labels(
         defaults["fontstyle"] = "italic"
     defaults.update(kwargs)
 
-    figure = ax.get_figure(root=True)
-    assert figure is not None
-    figure.canvas.draw_idle()
-    renderer = figure._get_renderer()  # ty: ignore[unresolved-attribute]
-
     placed: list[Annotation] = []
-    for left, right, name in zip(edges[:-1], edges[1:], names, strict=True):
-        if style == "emphasized":
-            name = "   ".join(" ".join(word) for word in name.upper().split())
+    for left, right, label in zip(edges[:-1], edges[1:], names, strict=True):
+        name = _emphasize(label) if style == "emphasized" else label
         center = _span_center(left, right, logarithmic)
         annotation = ax.annotate(name, xy=at(center), **defaults)
         span = abs(
             transform.transform(at(right))[0 if axis == "x" else 1]
             - transform.transform(at(left))[0 if axis == "x" else 1]
         )
-        extent = annotation.get_window_extent(renderer)
+        extent = annotation.get_window_extent()
         needed = extent.width if axis == "x" else extent.height
         if needed <= span:
             placed.append(annotation)
@@ -640,13 +630,7 @@ def region_labels(
             "textcoords": "offset points",
             "ha": "right" if toward_start else "left",
             "va": "center",
-            "arrowprops": {
-                "arrowstyle": "-",
-                "color": color,
-                "linewidth": 0.5,
-                "shrinkA": 2,
-                "shrinkB": 1,
-            },
+            "arrowprops": _leader_arrowprops(color),
         }
         away = -vertical_offset if position > 0.5 else vertical_offset
         placed.append(
@@ -669,8 +653,8 @@ def overflow_label(
     xspan: tuple[float, float],
     *,
     y: float = 0.965,
-    text_x: float | None = None,
-    right_x: float | None = None,
+    label_x: float | None = None,
+    arrow_x: float | None = None,
     marker_height: float = 0.065,
     color: ColorType = INK,
     background: bool = False,
@@ -679,8 +663,10 @@ def overflow_label(
 ) -> tuple[Annotation, Annotation, tuple[Line2D, Line2D]]:
     """Mark a clipped histogram span with arrows and its true value.
 
-    Horizontal positions use data coordinates. Vertical positions use axes
-    coordinates.
+    ``label_x`` places the text and its inbound arrow to the left of the span,
+    and ``arrow_x`` places the tail of the outbound arrow to its right. Both
+    default to a position derived from the current x limits. Horizontal
+    positions use data coordinates; vertical positions use axes coordinates.
     """
     left, right = xspan
     if not left < right:
@@ -692,13 +678,13 @@ def overflow_label(
 
     xmin, xmax = ax.get_xlim()
     width = xmax - xmin
-    label_x = left - 0.37 * width if text_x is None else text_x
-    arrow_x = right + 0.09 * width if right_x is None else right_x
+    label_position = left - 0.37 * width if label_x is None else label_x
+    arrow_position = right + 0.09 * width if arrow_x is None else arrow_x
     transform = blended_transform_factory(ax.transData, ax.transAxes)
     arrow = {
         "arrowstyle": "->",
         "color": color,
-        "linewidth": 0.65,
+        "linewidth": _RULE_WIDTH,
         "mutation_scale": 7,
         "shrinkA": 2,
         "shrinkB": 1,
@@ -716,11 +702,11 @@ def overflow_label(
         }
     )
     defaults.update(kwargs)
-    labelled = ax.annotate(text, xy=(left, y), xytext=(label_x, y), **defaults)
+    labelled = ax.annotate(text, xy=(left, y), xytext=(label_position, y), **defaults)
     unlabelled = ax.annotate(
         "",
         xy=(right, y),
-        xytext=(arrow_x, y),
+        xytext=(arrow_position, y),
         xycoords=transform,
         textcoords=transform,
         arrowprops=defaults["arrowprops"],
@@ -735,7 +721,7 @@ def overflow_label(
             [y - half_height, y + half_height],
             transform=transform,
             color=color,
-            linewidth=0.65,
+            linewidth=_RULE_WIDTH,
             linestyle=(0, (3, 2)),
             marker="",
             clip_on=False,

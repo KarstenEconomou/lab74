@@ -25,7 +25,8 @@ axes.spines.left: True
 axes.spines.bottom: True
 axes.spines.top: True
 axes.spines.right: True
-axes.prop_cycle: cycler('color', ["#CB6015", "#101112", "#101112", "#101112", "#101112", "#101112"]) + cycler('linestyle', ['-', '-', '--', ':', '-.', (0, (5, 2, 1, 2))]) + cycler('marker', ['o', 's', '^', 'D', 'x', '+'])
+# Keep this in step with sequences.LINE_INK, the cycle that use() applies.
+axes.prop_cycle: cycler('color', ["#101112", "#101112", "#101112", "#101112", "#101112", "#101112"]) + cycler('linestyle', ['-', '--', '-.', ':', (0, (7, 2)), (0, (5, 2, 1, 2, 1, 2))]) + cycler('marker', ['o', 's', '^', 'x', '+', 'D'])
 
 font.family: IBM Plex Sans Condensed
 font.sans-serif: IBM Plex Sans Condensed, DejaVu Sans

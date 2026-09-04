@@ -1,16 +1,14 @@
 """Define the ordered visual sequences used by each plot type."""
 
-from __future__ import annotations
-
 from typing import Any, Final, Literal
 
 from cycler import Cycler, cycler
-from matplotlib.typing import ColorType
+from matplotlib.typing import ColorType, LineStyleType, MarkerType
 
 from .palette import INK, MONOCHROME_LINE_COLORS, PAPER
 
 type ColorRole = Literal["accent", "ink", "paper"]
-type LineSeries = tuple[str, Any, str]
+type LineSeries = tuple[ColorRole | ColorType, LineStyleType, MarkerType]
 type LineSeriesMode = Literal["ink", "grayscale"]
 type BarSeries = tuple[ColorRole, str]
 
@@ -60,13 +58,13 @@ BAR_WITHOUT_ACCENT: Final[tuple[BarSeries, ...]] = (
 CONTOUR_HATCHES: Final[tuple[str, ...]] = ("", "/", "\\", "x", ".", "..")
 
 
-def _resolve_color(role: str, accent: ColorType | None) -> ColorType:
+def _resolve_color(role: ColorRole | ColorType, accent: ColorType | None) -> ColorType:
     """Resolve a semantic color role for an active accent state."""
     if role == "paper":
         return PAPER
     if role == "accent" and accent is not None:
         return accent
-    if role == "ink" or role == "accent":
+    if role in ("ink", "accent"):
         return INK
     return role
 

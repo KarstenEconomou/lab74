@@ -1,15 +1,12 @@
 """Draw sparse technical-print tables."""
 
-from __future__ import annotations
-
 from collections.abc import Sequence
 from dataclasses import dataclass
 from math import isfinite
-from typing import Any
+from typing import Any, Final
 
 import matplotlib as mpl
 import matplotlib.patheffects as path_effects
-from matplotlib import font_manager
 from matplotlib.artist import Artist
 from matplotlib.axes import Axes
 from matplotlib.lines import Line2D
@@ -18,14 +15,17 @@ from matplotlib.text import Text
 from matplotlib.transforms import offset_copy
 from matplotlib.typing import ColorType
 
-from ._fonts import GOTHIC_FONT, TECHNICAL_FONT
+from ._fonts import GOTHIC_FONT, MONO_FONT, font_size_points
 from .palette import INK, PAPER, RULE
 
-_HORIZONTAL_INSET = 0.02
-_SECTION_SIZE_OFFSET = 1.0
-_SWATCH_LABEL_SIZE_OFFSET = 1.0
-_SWATCH_LABEL_OFFSET = 0.70
-_SWATCH_ROW_UNITS = 1.75
+_HORIZONTAL_INSET: Final = 0.02
+_SECTION_SIZE_OFFSET: Final = 1.0
+_SWATCH_LABEL_SIZE_OFFSET: Final = 1.0
+_SWATCH_LABEL_OFFSET: Final = 0.70
+_SWATCH_ROW_UNITS: Final = 1.75
+_HEADING_STROKE: Final = 0.2
+_NAME_CELL_STROKE: Final = 0.08
+_RULE_WIDTH: Final = 0.55
 
 
 @dataclass(frozen=True, slots=True)
@@ -45,17 +45,6 @@ class TableSwatch:
 type TableCell = str | TableSwatch
 
 
-def _font_size_points(value: float | str) -> float:
-    """Return a validated Matplotlib font size in points."""
-    try:
-        size = font_manager.FontProperties(size=value).get_size_in_points()
-    except (TypeError, ValueError) as exc:
-        raise ValueError("The font size is invalid.") from exc
-    if not isfinite(size) or size <= 0:
-        raise ValueError("The font size must be positive and finite.")
-    return size
-
-
 def header(
     ax: Axes,
     name: str,
@@ -66,7 +55,7 @@ def header(
     inset: float = _HORIZONTAL_INSET,
     line_offset: float = 12.0,
     color: ColorType = INK,
-    fontsize: float | None = None,
+    fontsize: float | str | None = None,
 ) -> tuple[Text, Text, Text]:
     """Draw a uniform 2-line technical-document header."""
     if not all(isinstance(value, str) for value in (name, title, revision)):
@@ -82,7 +71,7 @@ def header(
     except ValueError as exc:
         raise ValueError("The header color must be valid.") from exc
 
-    resolved_size = _font_size_points(
+    resolved_size = font_size_points(
         mpl.rcParams["xtick.labelsize"] if fontsize is None else fontsize
     )
     name_size = resolved_size + _SECTION_SIZE_OFFSET
@@ -97,12 +86,14 @@ def header(
         "clip_on": False,
         "color": color,
         "fontsize": resolved_size,
-        "fontfamily": TECHNICAL_FONT,
+        "fontfamily": MONO_FONT,
     }
     name_defaults: dict[str, Any] = defaults | {
         "fontsize": name_size,
         "fontweight": "medium",
-        "path_effects": [path_effects.withStroke(linewidth=0.2, foreground=color)],
+        "path_effects": [
+            path_effects.withStroke(linewidth=_HEADING_STROKE, foreground=color)
+        ],
     }
     return (
         ax.text(inset, y, name, transform=ax.transAxes, ha="left", **name_defaults),
@@ -153,13 +144,16 @@ def table(
     inset: float = _HORIZONTAL_INSET,
     color: ColorType = INK,
     rule_color: ColorType = INK,
-    fontsize: float | None = None,
+    fontsize: float | str | None = None,
 ) -> tuple[Artist, ...]:
     """Draw a sparse table in axes coordinates and return its artists.
 
+    The first column of every row carries medium weight as its name column.
     A :class:`TableSwatch` uses a double-height row to place a solid color bar
     above its label. This function keeps cell text exactly as given.
     """
+    if title is not None and not isinstance(title, str):
+        raise TypeError("The table title must be a string or None.")
     if isinstance(columns, (str, bytes)):
         raise TypeError("Table columns must be a sequence of headings.")
     headings = tuple(columns)
@@ -210,7 +204,7 @@ def table(
         mpl.colors.to_rgba(rule_color)
     except ValueError as exc:
         raise ValueError("The table text and rule colors must be valid.") from exc
-    text_size = _font_size_points(
+    text_size = font_size_points(
         mpl.rcParams["xtick.labelsize"] if fontsize is None else fontsize
     )
     swatch_label_size = max(text_size - _SWATCH_LABEL_SIZE_OFFSET, 1.0)
@@ -239,26 +233,28 @@ def table(
         "clip_on": False,
         "color": color,
         "fontsize": text_size,
-        "fontfamily": TECHNICAL_FONT,
+        "fontfamily": MONO_FONT,
     }
     heading_defaults: dict[str, Any] = text_defaults | {
         "fontfamily": GOTHIC_FONT,
         "fontweight": "medium",
-        "path_effects": [path_effects.withStroke(linewidth=0.2, foreground=color)],
+        "path_effects": [
+            path_effects.withStroke(linewidth=_HEADING_STROKE, foreground=color)
+        ],
     }
     section_defaults: dict[str, Any] = heading_defaults | {
         "fontsize": text_size + _SECTION_SIZE_OFFSET,
     }
     name_cell_defaults: dict[str, Any] = text_defaults | {
         "fontweight": "medium",
-        "path_effects": [path_effects.withStroke(linewidth=0.08, foreground=color)],
+        "path_effects": [
+            path_effects.withStroke(linewidth=_NAME_CELL_STROKE, foreground=color)
+        ],
     }
 
     artists: list[Artist] = []
     cursor = top
     if title is not None:
-        if not isinstance(title, str):
-            raise TypeError("The table title must be a string or None.")
         artists.append(ax.text(left + padding, cursor, title, **section_defaults))
         cursor -= unit * 0.76
         rule = Line2D(
@@ -266,7 +262,7 @@ def table(
             [cursor, cursor],
             transform=ax.transAxes,
             color=rule_color,
-            linewidth=0.55,
+            linewidth=_RULE_WIDTH,
             solid_capstyle="butt",
             clip_on=False,
         )

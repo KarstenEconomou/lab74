@@ -24,7 +24,7 @@ def test_accent_lookup():
 
 
 def test_unknown_accent_lists_choices():
-    with pytest.raises(ValueError, match="unknown lab74 accent") as error:
+    with pytest.raises(ValueError, match="Unknown lab74 accent") as error:
         get_accent("rainbow")  # ty: ignore[invalid-argument-type]
     assert "instrument" in str(error.value)
     assert "technology" in str(error.value)
@@ -32,5 +32,5 @@ def test_unknown_accent_lists_choices():
 
 @pytest.mark.parametrize("legacy_name", ["prairie", "marlin", "technical", "fermilab"])
 def test_renamed_accents_are_not_retained_as_aliases(legacy_name):
-    with pytest.raises(ValueError, match="unknown lab74 accent"):
+    with pytest.raises(ValueError, match="Unknown lab74 accent"):
         get_accent(legacy_name)

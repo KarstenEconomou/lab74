@@ -8,7 +8,7 @@ import lab74
 
 
 def _literal_choices(annotation: object) -> set[str]:
-    if isinstance(annotation, TypeAliasType):
+    while isinstance(annotation, TypeAliasType):
         annotation = annotation.__value__
     if get_origin(annotation) is Literal:
         return {value for value in get_args(annotation) if isinstance(value, str)}
@@ -68,3 +68,17 @@ def test_figure_exports(tmp_path: Path, suffix: str):
     fig.savefig(destination)
     assert destination.is_file()
     assert destination.stat().st_size > 100
+
+
+def test_every_exported_name_resolves():
+    missing = [name for name in lab74.__all__ if not hasattr(lab74, name)]
+    assert missing == []
+
+
+@pytest.mark.parametrize(
+    "module",
+    [lab74.annotations, lab74.layout, lab74.palette, lab74.primitives, lab74.tables],
+)
+def test_submodule_exports_reach_the_package_namespace(module):
+    """Keep the top-level namespace complete; ``sequences`` is reached as a module."""
+    assert set(module.__all__) <= set(lab74.__all__)
