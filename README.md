@@ -85,6 +85,8 @@ Executable notebooks are in the [examples/](https://github.com/KarstenEconomou/l
 
 [![Lunar landing-site soil composition by terrain type](https://raw.githubusercontent.com/KarstenEconomou/lab74/v2.0.0/examples/output/05_lunar_soil_composition.png)](https://github.com/KarstenEconomou/lab74/blob/v2.0.0/examples/05_lunar_soil_composition.ipynb)
 
+[![Xenon phonon dispersion at 10 K](https://raw.githubusercontent.com/KarstenEconomou/lab74/v2.0.0/examples/output/07_xenon_phonons.png)](https://github.com/KarstenEconomou/lab74/blob/v2.0.0/examples/07_xenon_phonons.ipynb)
+
 ## Fonts
 
 `lab74` bundles IBM Plex Sans Condensed (the `gothic` face) and IBM Plex Mono
