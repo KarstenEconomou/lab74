@@ -6,12 +6,14 @@ from typing import Any, Final, Literal, TypedDict
 
 from matplotlib.axes import Axes
 from matplotlib.lines import Line2D
+from matplotlib.patches import FancyArrowPatch
 from matplotlib.ticker import FixedLocator, FuncFormatter
 from matplotlib.typing import ColorType
 
 from .palette import INK, RULE
 
 type AxesInput = Axes | Iterable[AxesInput]
+type AxisArrowSide = Literal["top", "bottom"]
 type FrameStyle = Literal["open", "closed"]
 type GridStyle = Literal["rule", "ink"]
 type GridWhich = Literal["major", "minor", "both"]
@@ -64,6 +66,46 @@ _TICK_STYLES: Final[dict[TickStyle, _TickValues]] = {
         "minor_width": 0.5,
     },
 }
+
+
+def axis_arrow(
+    ax: Axes,
+    start: float,
+    end: float,
+    *,
+    side: AxisArrowSide = "top",
+    offset: float = 0.04,
+    color: ColorType = INK,
+    linewidth: float = 0.65,
+    mutation_scale: float = 9.0,
+) -> FancyArrowPatch:
+    """Draw a thin directional arrow just outside an x-axis.
+
+    ``start`` and ``end`` use data coordinates; ``offset`` uses the axes
+    coordinate system, measured outward from the named x-axis edge.
+    """
+    if side not in ("top", "bottom"):
+        raise ValueError("The axis-arrow side must be 'top' or 'bottom'.")
+    if not all(isfinite(value) for value in (start, end, offset, linewidth)):
+        raise ValueError("Axis-arrow coordinates and linewidth must be finite.")
+    if offset < 0:
+        raise ValueError("The axis-arrow offset must be non-negative.")
+    if mutation_scale <= 0:
+        raise ValueError("The axis-arrow mutation scale must be positive.")
+
+    position = 1 + offset if side == "top" else -offset
+    arrow = FancyArrowPatch(
+        (start, position),
+        (end, position),
+        transform=ax.get_xaxis_transform(),
+        arrowstyle="-|>",
+        mutation_scale=mutation_scale,
+        linewidth=linewidth,
+        color=color,
+        clip_on=False,
+    )
+    ax.add_patch(arrow)
+    return arrow
 
 
 def _axes_tuple(axes: AxesInput) -> tuple[Axes, ...]:
@@ -285,12 +327,14 @@ def format_multipanel(
 
 __all__ = [
     "AxesInput",
+    "AxisArrowSide",
     "FrameStyle",
     "GridStyle",
     "GridWhich",
     "MultipanelMode",
     "TickAxis",
     "TickStyle",
+    "axis_arrow",
     "format_frame",
     "format_graticule",
     "format_grid",
