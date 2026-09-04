@@ -5,6 +5,27 @@ import pytest
 import lab74
 
 
+def test_axis_arrow_places_a_thin_arrow_outside_the_named_axis_edge():
+    _, ax = plt.subplots()
+
+    top = lab74.axis_arrow(ax, 1, 2, offset=0.03)
+    bottom = lab74.axis_arrow(ax, 3, 2, side="bottom", offset=0.08)
+
+    assert top.get_path().vertices[0, 1] == pytest.approx(1.03)
+    assert bottom.get_path().vertices[0, 1] == pytest.approx(-0.08)
+    assert top.get_linewidth() == pytest.approx(0.65)
+    assert top.get_mutation_scale() == pytest.approx(9.0)
+
+
+def test_axis_arrow_validates_placement_values():
+    _, ax = plt.subplots()
+
+    with pytest.raises(ValueError, match="side"):
+        lab74.axis_arrow(ax, 0, 1, side="left")  # ty: ignore[invalid-argument-type]
+    with pytest.raises(ValueError, match="offset"):
+        lab74.axis_arrow(ax, 0, 1, offset=-0.1)
+
+
 def test_format_ticks_supports_default_and_cross_styles():
     lab74.use(accent=None)
     fig, (default_ax, cross_ax) = plt.subplots(1, 2)
