@@ -1,6 +1,6 @@
 [project]
 name = "lab74"
-version = "2.0.0"
+version = "2.1.0"
 description = "Matplotlib style layer for scientific and institutional figures in the technical print style of ca. 1965–1980."
 readme = "README.md"
 license = "MIT"

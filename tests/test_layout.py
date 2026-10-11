@@ -11,8 +11,8 @@ def test_axis_arrow_places_a_thin_arrow_outside_the_named_axis_edge():
     top = lab74.axis_arrow(ax, 1, 2, offset=0.03)
     bottom = lab74.axis_arrow(ax, 3, 2, side="bottom", offset=0.08)
 
-    assert top.get_path().vertices[0, 1] == pytest.approx(1.03)
-    assert bottom.get_path().vertices[0, 1] == pytest.approx(-0.08)
+    assert np.asarray(top.get_path().vertices)[0, 1] == pytest.approx(1.03)
+    assert np.asarray(bottom.get_path().vertices)[0, 1] == pytest.approx(-0.08)
     assert top.get_linewidth() == pytest.approx(0.65)
     assert top.get_mutation_scale() == pytest.approx(9.0)
 

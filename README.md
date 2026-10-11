@@ -1,17 +1,17 @@
 # lab74
 
 [![PyPI](https://img.shields.io/pypi/v/lab74)](https://pypi.org/project/lab74/)
-[![Python versions](https://img.shields.io/pypi/pyversions/lab74)](https://pypi.org/project/lab74/)
-[![License](https://img.shields.io/pypi/l/lab74)](https://github.com/KarstenEconomou/lab74/blob/v2.0.0/LICENSE)
+[![Python 3.12+](https://img.shields.io/badge/python-3.12%2B-blue)](https://pypi.org/project/lab74/)
+[![License](https://img.shields.io/pypi/l/lab74)](https://github.com/KarstenEconomou/lab74/blob/v2.1.0/LICENSE)
 
-`lab74` is a Matplotlib style layer for scientific and institutional 
+`lab74` is a Matplotlib style layer for scientific and institutional
 figures in the technical print style of ca. 1965–1980.
 
-The style uses fine rules, compact type, direct labels, monochrome textures, 
+The style uses fine rules, compact type, direct labels, monochrome textures,
 and one optional accent color. It does not add old-paper,
 film-grain, or other retro effects.
 
-[![Calculated characteristics of an n+-p-p+ silicon solar cell](https://raw.githubusercontent.com/KarstenEconomou/lab74/v2.0.0/examples/output/04_silicon_solar_cell.png)](https://github.com/KarstenEconomou/lab74/blob/v2.0.0/examples/04_silicon_solar_cell.ipynb)
+[![Calculated characteristics of an n+-p-p+ silicon solar cell](https://raw.githubusercontent.com/KarstenEconomou/lab74/v2.1.0/examples/output/04_silicon_solar_cell.png)](https://github.com/KarstenEconomou/lab74/blob/v2.1.0/examples/04_silicon_solar_cell.ipynb)
 
 ## Installation
 
@@ -28,7 +28,7 @@ Requirements:
 
 ## Use
 
-[![lab74 colour reproduction standard](https://raw.githubusercontent.com/KarstenEconomou/lab74/v2.0.0/examples/output/06_palette.png)](https://github.com/KarstenEconomou/lab74/blob/v2.0.0/examples/06_palette.ipynb)
+[![lab74 colour reproduction standard](https://raw.githubusercontent.com/KarstenEconomou/lab74/v2.1.0/examples/output/06_palette.png)](https://github.com/KarstenEconomou/lab74/blob/v2.1.0/examples/06_palette.ipynb)
 
 ```python
 import matplotlib.pyplot as plt
@@ -72,26 +72,26 @@ frames, and multipanel layouts.
 These tools return normal Matplotlib artists.
 Thus, you can change the result with the Matplotlib API.
 
-See [src/lab74/](https://github.com/KarstenEconomou/lab74/tree/v2.0.0/src/lab74) for all available tools and their
+See [src/lab74/](https://github.com/KarstenEconomou/lab74/tree/v2.1.0/src/lab74) for all available tools and their
 docstrings.
 
 ## Gallery
 
-Executable notebooks are in the [examples/](https://github.com/KarstenEconomou/lab74/tree/v2.0.0/examples). 
+Executable notebooks are in the [examples/](https://github.com/KarstenEconomou/lab74/tree/v2.1.0/examples).
 
-[![Apollo 17 orange and gray soil grain-size distributions](https://raw.githubusercontent.com/KarstenEconomou/lab74/v2.0.0/examples/output/03_apollo17_soil_grain_size.png)](https://github.com/KarstenEconomou/lab74/blob/v2.0.0/examples/03_apollo17_soil_grain_size.ipynb)
+[![Apollo 17 orange and gray soil grain-size distributions](https://raw.githubusercontent.com/KarstenEconomou/lab74/v2.1.0/examples/output/03_apollo17_soil_grain_size.png)](https://github.com/KarstenEconomou/lab74/blob/v2.1.0/examples/03_apollo17_soil_grain_size.ipynb)
 
-[![Apollo 17 subsurface heat-flow temperatures](https://raw.githubusercontent.com/KarstenEconomou/lab74/v2.0.0/examples/output/02_apollo17_hfe.png)](https://github.com/KarstenEconomou/lab74/blob/v2.0.0/examples/02_apollo17_hfe.ipynb)
+[![Apollo 17 subsurface heat-flow temperatures](https://raw.githubusercontent.com/KarstenEconomou/lab74/v2.1.0/examples/output/02_apollo17_hfe.png)](https://github.com/KarstenEconomou/lab74/blob/v2.1.0/examples/02_apollo17_hfe.ipynb)
 
-[![Lunar landing-site soil composition by terrain type](https://raw.githubusercontent.com/KarstenEconomou/lab74/v2.0.0/examples/output/05_lunar_soil_composition.png)](https://github.com/KarstenEconomou/lab74/blob/v2.0.0/examples/05_lunar_soil_composition.ipynb)
+[![Lunar landing-site soil composition by terrain type](https://raw.githubusercontent.com/KarstenEconomou/lab74/v2.1.0/examples/output/05_lunar_soil_composition.png)](https://github.com/KarstenEconomou/lab74/blob/v2.1.0/examples/05_lunar_soil_composition.ipynb)
 
-[![Xenon phonon dispersion at 10 K](https://raw.githubusercontent.com/KarstenEconomou/lab74/v2.0.0/examples/output/07_xenon_phonons.png)](https://github.com/KarstenEconomou/lab74/blob/v2.0.0/examples/07_xenon_phonons.ipynb)
+[![Xenon phonon dispersion at 10 K](https://raw.githubusercontent.com/KarstenEconomou/lab74/v2.1.0/examples/output/07_xenon_phonons.png)](https://github.com/KarstenEconomou/lab74/blob/v2.1.0/examples/07_xenon_phonons.ipynb)
 
 ## Fonts
 
 `lab74` bundles IBM Plex Sans Condensed (the `gothic` face) and IBM Plex Mono
 (the `mono` face), each in regular, italic, and medium weights, under the
-[SIL Open Font License 1.1](https://github.com/KarstenEconomou/lab74/blob/v2.0.0/src/lab74/fonts/OFL.txt). If neither font is
+[SIL Open Font License 1.1](https://github.com/KarstenEconomou/lab74/blob/v2.1.0/src/lab74/fonts/OFL.txt). If neither font is
 installed, `lab74` falls back to DejaVu Sans and DejaVu Sans Mono.
 
 ## Development
@@ -111,4 +111,4 @@ uv run pytest
 
 ## License
 
-`lab74` is available under the [MIT license](https://github.com/KarstenEconomou/lab74/blob/v2.0.0/LICENSE).
+`lab74` is available under the [MIT license](https://github.com/KarstenEconomou/lab74/blob/v2.1.0/LICENSE).
